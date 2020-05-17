@@ -7,9 +7,8 @@ use Mix.Config
 # Run `mix help test` for more information.
 config :mina, Mina.Repo,
   username: "postgres",
-  password: "postgres",
   database: "mina_test#{System.get_env("MIX_TEST_PARTITION")}",
-  hostname: "localhost",
+  hostname: "postgres",
   pool: Ecto.Adapters.SQL.Sandbox
 
 # We don't run a server during test. If one is required,
