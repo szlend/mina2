@@ -1,0 +1,19 @@
+version: "3.7"
+
+volumes:
+  postgres_data:
+
+services:
+  postgres:
+    image: postgres:12
+    environment:
+      POSTGRES_HOST_AUTH_METHOD: trust
+    volumes:
+      - postgres_data:/var/lib/postgresql
+
+  mina:
+    command: mix phx.server
+    depends_on:
+      - postgres
+    ports:
+      - 4000:4000

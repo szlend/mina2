@@ -1,0 +1,39 @@
+name: Continuous integration
+on: [push]
+
+jobs:
+  test:
+    name: Run tests
+    runs-on: ubuntu-latest
+
+    env:
+      COMPOSE_FILE: docker-compose.base.yml:docker-compose.ci.yml
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Build application
+        id: build_application
+        uses: whoan/docker-build-with-cache-action@v5
+        with:
+          username: ${{ github.repository_owner }}
+          password: ${{ github.token }}
+          registry: docker.pkg.github.com
+          image_name: mina-ci
+          build_extra_args: --target build --build-arg MIX_ENV=test
+          push_git_tag: true
+
+      - name: Export image name
+        run: echo ::set-env name=IMAGE_NAME::${{ steps.build_application.outputs.FULL_IMAGE_NAME }}
+
+      - name: Setup environment
+        run: |
+          docker-compose up --no-start
+          docker-compose run mina mix do ecto.create, ecto.migrate 2> /dev/null
+
+      - name: Check formatting
+        run: docker-compose run mina mix format --check-formatted 2> /dev/null
+
+      - name: Run tests
+        run: docker-compose run mina mix test 2> /dev/null

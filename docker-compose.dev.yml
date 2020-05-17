@@ -1,0 +1,17 @@
+version: "3.7"
+
+volumes:
+  mina_deps:
+  mina_build:
+  mina_node_modules:
+
+services:
+  mina:
+    build:
+      context: .
+      target: development
+    volumes:
+      - mina_deps:/app/deps
+      - mina_build:/app/_build
+      - mina_node_modules:/app/assets/node_modules
+      - .:/app
