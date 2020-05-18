@@ -4,12 +4,14 @@ defmodule Mina.Board do
   """
 
   alias __MODULE__
+  alias Mina.Board.Reveal
 
   defstruct [:seed, :difficulty]
 
   @type t :: %Board{seed: String.t(), difficulty: non_neg_integer()}
   @type position :: {integer, integer}
   @type tile :: :mine | {:proximity, 0..8}
+  @type reveals :: %{position => tile}
 
   @doc """
   Builds a new board for a given `seed` and `difficulty`
@@ -40,15 +42,29 @@ defmodule Mina.Board do
     end
   end
 
+  @doc """
+  Returns a map of positions and their tiles after revealing a `board` at `position`
+  """
+  @spec reveal(t, position) :: reveals
+  def reveal(board, position) do
+    Reveal.reveal(board, position)
+  end
+
+  @doc """
+  Returns a number of mines on the `board` adjacent to `position`
+  """
   @spec proximate_mines(t, position) :: non_neg_integer
-  defp proximate_mines(board, position) do
+  def proximate_mines(board, position) do
     position
     |> adjacent_positions()
     |> Enum.count(fn position -> mine_at?(board, position) end)
   end
 
+  @doc """
+  Returns a list of adjacent positions to `position`
+  """
   @spec adjacent_positions(position) :: [position]
-  defp adjacent_positions({x, y} = _position) do
+  def adjacent_positions({x, y} = _position) do
     [
       {x - 1, y + 1},
       {x + 0, y + 1},
