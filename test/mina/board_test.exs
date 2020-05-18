@@ -80,5 +80,23 @@ defmodule Mina.BoardTest do
                {2, -1} => {:proximity, 2}
              }
     end
+
+    test "reveals only tiles within bounds", %{board: board} do
+      assert Board.reveal(board, {1, -2}, bounds: {{0, -3}, {2, -1}}) == %{
+               {0, -3} => {:proximity, 1},
+               {0, -2} => {:proximity, 1},
+               {0, -1} => {:proximity, 1},
+               {1, -3} => {:proximity, 0},
+               {1, -2} => {:proximity, 0},
+               {1, -1} => {:proximity, 1},
+               {2, -3} => {:proximity, 1},
+               {2, -2} => {:proximity, 1},
+               {2, -1} => {:proximity, 2}
+             }
+    end
+
+    test "does not reveal tiles outside bounds", %{board: board} do
+      assert Board.reveal(board, {3, 3}, bounds: {{-2, -2}, {2, 2}}) == %{}
+    end
   end
 end

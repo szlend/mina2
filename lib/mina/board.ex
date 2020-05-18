@@ -12,6 +12,7 @@ defmodule Mina.Board do
   @type position :: {integer, integer}
   @type tile :: :mine | {:proximity, 0..8}
   @type reveals :: %{position => tile}
+  @type bounds :: {position, position}
 
   @doc """
   Builds a new board for a given `seed` and `difficulty`
@@ -43,11 +44,19 @@ defmodule Mina.Board do
   end
 
   @doc """
-  Returns a map of positions and their tiles after revealing a `board` at `position`
+  Reveals tiles on a `board`, starting from `position`. Returns a map of reveals (`position => tile`).
+
+  ## Options
+
+  The accepted options are:
+
+  * `:bounds` - the inclusive bounds (bottom-left, top-right) to restrict revealing to (e.g, `{{0, 0}, {1, 1}}`)
+  * `:reveals` - a map of existing reveals (`position => tile`)
   """
-  @spec reveal(t, position) :: reveals
-  def reveal(board, position) do
-    Reveal.reveal(board, position)
+  @type reveal_opt :: {:bounds, bounds} | {:reveals, reveals}
+  @spec reveal(t, position, [reveal_opt]) :: reveals
+  def reveal(board, position, opts \\ []) do
+    Reveal.reveal(board, position, opts[:bounds], opts[:reveals] || %{})
   end
 
   @doc """
