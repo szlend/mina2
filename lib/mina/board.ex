@@ -51,7 +51,7 @@ defmodule Mina.Board do
   The accepted options are:
 
   * `:bounds` - the inclusive bounds (bottom-left, top-right) to restrict revealing to (e.g, `{{0, 0}, {1, 1}}`)
-  * `:reveals` - a map of existing reveals (`position => tile`)
+  * `:reveals` - a map of existing reveals (`position => tile`) which are ignored in this reveal
   """
   @type reveal_opt :: {:bounds, bounds} | {:reveals, reveals}
   @spec reveal(t, position, [reveal_opt]) :: reveals
