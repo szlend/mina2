@@ -15,17 +15,18 @@ defmodule Mina.PartitionTest do
     # [".", ".", ".", "1", "x", "1", ".", "1", "1", "1", "1"], -3
     # ["1", "1", "2", "2", "2", "1", ".", "1", "x", "2", "3"], -4
     # ["1", "x", "2", "x", "2", "1", "1", "1", "2", "x", "3"]  -5
-    board = %Board{seed: "test", difficulty: 11}
-    partition = %Partition{board: board, size: 5, position: {0, 0}, reveals: %{}}
 
-    [board: board, partition: partition]
+    board = %Board{seed: "test", difficulty: 11}
+    spec = %Partition.Spec{board: board, size: 5}
+    partition = %Partition{spec: spec, position: {0, 0}, reveals: %{}}
+
+    [board: board, spec: spec, partition: partition]
   end
 
   describe "build/3" do
-    test "builds a new partition", %{board: board} do
-      assert Partition.build(board, 5, {0, 0}) == %Partition{
-               board: board,
-               size: 5,
+    test "builds a new partition", %{spec: spec} do
+      assert Partition.build(spec, {0, 0}) == %Partition{
+               spec: spec,
                position: {0, 0},
                reveals: %{}
              }
@@ -34,55 +35,58 @@ defmodule Mina.PartitionTest do
 
   describe "id/1" do
     test "returns the correct id", %{partition: partition} do
-      assert Partition.id(partition) == {"test", 11, 5, {0, 0}}
+      assert Partition.id(partition) == {{"test", 11, 5}, {0, 0}}
     end
   end
 
   describe "partition_at/2" do
     test "returns the correct partition - inside", %{partition: partition} do
-      assert Partition.partition_at(partition, {1, 1}) == {"test", 11, 5, {0, 0}}
+      assert Partition.partition_at(partition, {1, 1}) == {{"test", 11, 5}, {0, 0}}
     end
 
     test "returns the correct partition - bottom-left", %{partition: partition} do
-      assert Partition.partition_at(partition, {0, 0}) == {"test", 11, 5, {0, 0}}
+      assert Partition.partition_at(partition, {0, 0}) == {{"test", 11, 5}, {0, 0}}
     end
 
     test "returns the correct partition - bottom-right position", %{partition: partition} do
-      assert Partition.partition_at(partition, {0, 4}) == {"test", 11, 5, {0, 0}}
+      assert Partition.partition_at(partition, {0, 4}) == {{"test", 11, 5}, {0, 0}}
     end
 
     test "returns the correct partition - top-left", %{partition: partition} do
-      assert Partition.partition_at(partition, {4, 0}) == {"test", 11, 5, {0, 0}}
+      assert Partition.partition_at(partition, {4, 0}) == {{"test", 11, 5}, {0, 0}}
     end
 
     test "returns the correct partition - top-right", %{partition: partition} do
-      assert Partition.partition_at(partition, {4, 4}) == {"test", 11, 5, {0, 0}}
+      assert Partition.partition_at(partition, {4, 4}) == {{"test", 11, 5}, {0, 0}}
     end
 
     test "returns the correct partition - inside negative", %{partition: partition} do
-      assert Partition.partition_at(partition, {-4, -4}) == {"test", 11, 5, {-5, -5}}
+      assert Partition.partition_at(partition, {-4, -4}) == {{"test", 11, 5}, {-5, -5}}
     end
 
     test "returns the correct partition - bottom-left negative", %{partition: partition} do
-      assert Partition.partition_at(partition, {-5, -5}) == {"test", 11, 5, {-5, -5}}
+      assert Partition.partition_at(partition, {-5, -5}) == {{"test", 11, 5}, {-5, -5}}
     end
 
     test "returns the correct partition - bottom-right negative", %{partition: partition} do
-      assert Partition.partition_at(partition, {-1, -5}) == {"test", 11, 5, {-5, -5}}
+      assert Partition.partition_at(partition, {-1, -5}) == {{"test", 11, 5}, {-5, -5}}
     end
 
     test "returns the correct partition - top-left negative", %{partition: partition} do
-      assert Partition.partition_at(partition, {-5, -1}) == {"test", 11, 5, {-5, -5}}
+      assert Partition.partition_at(partition, {-5, -1}) == {{"test", 11, 5}, {-5, -5}}
     end
 
     test "returns the correct partition - top-right negative", %{partition: partition} do
-      assert Partition.partition_at(partition, {-1, -1}) == {"test", 11, 5, {-5, -5}}
+      assert Partition.partition_at(partition, {-1, -1}) == {{"test", 11, 5}, {-5, -5}}
     end
   end
 
   describe "reveal/2" do
     setup %{board: board} do
-      [partition: %Partition{board: board, size: 4, position: {-4, -4}, reveals: %{}}]
+      spec = %Partition.Spec{board: board, size: 4}
+      partition = %Partition{spec: spec, position: {-4, -4}, reveals: %{}}
+
+      [partition: partition]
     end
 
     test "updates the partition with new reveals", %{partition: partition} do
@@ -126,9 +130,9 @@ defmodule Mina.PartitionTest do
       {_, _, border_positions} = Partition.reveal(partition, {-4, -1})
 
       assert border_positions == %{
-               {"test", 11, 4, {-4, 0}} => [{-4, 0}, {-3, 0}],
-               {"test", 11, 4, {-8, 0}} => [{-5, 0}],
-               {"test", 11, 4, {-8, -4}} => [{-5, -4}, {-5, -3}, {-5, -2}, {-5, -1}]
+               {{"test", 11, 4}, {-4, 0}} => [{-4, 0}, {-3, 0}],
+               {{"test", 11, 4}, {-8, 0}} => [{-5, 0}],
+               {{"test", 11, 4}, {-8, -4}} => [{-5, -4}, {-5, -3}, {-5, -2}, {-5, -1}]
              }
     end
   end

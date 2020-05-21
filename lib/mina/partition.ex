@@ -1,27 +1,23 @@
 defmodule Mina.Partition do
   @moduledoc """
-  Provides functions for working with board Partitions
+  Provides functions for working with board Partitions.
   """
 
   alias __MODULE__
   alias Mina.Board
+  alias Mina.Partition.Spec
 
-  defstruct [:board, :size, :position, :reveals]
+  @type t :: %Partition{spec: Spec.t(), position: Board.position(), reveals: Board.reveals()}
+  @type id :: {Spec.id(), Board.position()}
 
-  @type t :: %Partition{
-          board: Board.t(),
-          size: pos_integer,
-          position: Board.position(),
-          reveals: Board.reveals()
-        }
-  @type id :: {String.t(), non_neg_integer, pos_integer, Board.position()}
+  defstruct [:spec, :position, :reveals]
 
   @doc """
-  Build a new partition living in `board` space, at `position` and `size`.
+  Build a new partition from a partition `spec` at `position`.
   """
-  @spec build(Board.t(), non_neg_integer, Board.position()) :: t
-  def build(board, size, position) do
-    %Partition{board: board, size: size, position: position, reveals: %{}}
+  @spec build(Spec.t(), Board.position()) :: t
+  def build(spec, position) do
+    %Partition{spec: spec, position: position, reveals: %{}}
   end
 
   @doc """
@@ -29,7 +25,7 @@ defmodule Mina.Partition do
   """
   @spec id(t) :: id
   def id(partition) do
-    {partition.board.seed, partition.board.difficulty, partition.size, partition.position}
+    {Spec.id(partition.spec), partition.position}
   end
 
   @doc """
@@ -37,8 +33,8 @@ defmodule Mina.Partition do
   """
   @spec partition_at(t, Board.position()) :: id
   def partition_at(partition, {x, y} = _position) do
-    position = {x - Integer.mod(x, partition.size), y - Integer.mod(y, partition.size)}
-    {partition.board.seed, partition.board.difficulty, partition.size, position}
+    position = {x - Integer.mod(x, partition.spec.size), y - Integer.mod(y, partition.spec.size)}
+    {Spec.id(partition.spec), position}
   end
 
   @doc """
@@ -51,7 +47,7 @@ defmodule Mina.Partition do
     id = id(partition)
 
     {internal_reveals, border_reveals} =
-      partition.board
+      partition.spec.board
       # reveal with bounds that include the neighbouring border
       |> Board.reveal(position, reveals: partition.reveals, bounds: extended_bounds(partition))
       # group the reveals by partition id
@@ -69,7 +65,7 @@ defmodule Mina.Partition do
   end
 
   # The bounds of the partition, including the border
-  defp extended_bounds(%{size: size, position: {x, y}} = _partition) do
+  defp extended_bounds(%{spec: %{size: size}, position: {x, y}} = _partition) do
     {{x - 1, y - 1}, {x + size + 1, y + size + 1}}
   end
 end

@@ -1,23 +1,25 @@
 defmodule Mina.Board do
   @moduledoc """
-  Provides basic minesweeper game logic
+  Provides basic minesweeper game logic.
   """
 
   alias __MODULE__
   alias Mina.Board.Reveal
 
-  defstruct [:seed, :difficulty]
-
-  @type t :: %Board{seed: String.t(), difficulty: non_neg_integer}
+  @type t :: %Board{seed: seed, difficulty: difficulty}
+  @type seed :: String.t()
+  @type difficulty :: non_neg_integer
   @type position :: {integer, integer}
   @type tile :: :mine | {:proximity, 0..8}
   @type reveals :: %{position => tile}
   @type bounds :: {position, position}
 
+  defstruct [:seed, :difficulty]
+
   @doc """
   Builds a new board for a given `seed` and `difficulty`
   """
-  @spec build(String.t(), non_neg_integer) :: t
+  @spec build(seed, difficulty) :: t
   def build(seed, difficulty) when difficulty >= 0 and difficulty <= 100 do
     %Board{seed: seed, difficulty: difficulty}
   end

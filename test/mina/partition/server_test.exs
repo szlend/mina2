@@ -15,10 +15,12 @@ defmodule Mina.Partition.ServerTest do
     # [".", ".", ".", "1", "x", "1", ".", "1", "1", "1", "1"], -3
     # ["1", "1", "2", "2", "2", "1", ".", "1", "x", "2", "3"], -4
     # ["1", "x", "2", "x", "2", "1", "1", "1", "2", "x", "3"]  -5
-    board = %Board{seed: "test", difficulty: 11}
-    partition = %Partition{board: board, size: 5, position: {0, 0}, reveals: %{}}
 
-    [board: board, partition: partition]
+    board = %Board{seed: "test", difficulty: 11}
+    spec = %Partition.Spec{board: board, size: 5}
+    partition = %Partition{spec: spec, position: {0, 0}, reveals: %{}}
+
+    [partition: partition]
   end
 
   describe "reveal/2" do
