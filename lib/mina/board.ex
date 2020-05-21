@@ -8,7 +8,7 @@ defmodule Mina.Board do
 
   defstruct [:seed, :difficulty]
 
-  @type t :: %Board{seed: String.t(), difficulty: non_neg_integer()}
+  @type t :: %Board{seed: String.t(), difficulty: non_neg_integer}
   @type position :: {integer, integer}
   @type tile :: :mine | {:proximity, 0..8}
   @type reveals :: %{position => tile}
@@ -17,7 +17,7 @@ defmodule Mina.Board do
   @doc """
   Builds a new board for a given `seed` and `difficulty`
   """
-  @spec build(String.t(), non_neg_integer()) :: t
+  @spec build(String.t(), non_neg_integer) :: t
   def build(seed, difficulty) when difficulty >= 0 and difficulty <= 100 do
     %Board{seed: seed, difficulty: difficulty}
   end

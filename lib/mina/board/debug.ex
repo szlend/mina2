@@ -8,7 +8,7 @@ defmodule Mina.Board.Debug do
   @doc """
   Returns a grid of formatted tiles on the `board` with a given `radius`, centered around `position`
   """
-  @spec dump(Board.t(), Board.position(), pos_integer) :: [[integer]]
+  @spec dump(Board.t(), Board.position(), pos_integer) :: [[String.t()]]
   def dump(board, {center_x, center_y} = _position, radius) do
     for y <- (center_y + radius)..(center_y - radius) do
       for x <- (center_x - radius)..(center_x + radius) do
