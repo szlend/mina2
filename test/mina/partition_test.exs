@@ -1,6 +1,5 @@
 defmodule Mina.PartitionTest do
-  use Mina.DataCase
-
+  use Mina.DataCase, async: true
   alias Mina.{Board, Partition}
 
   setup do
@@ -40,16 +39,44 @@ defmodule Mina.PartitionTest do
   end
 
   describe "partition_at/2" do
-    test "returns the correct partition id", %{partition: partition} do
-      assert Partition.partition_at(partition, {0, 0}) == {"test", 11, 5, {0, 0}}
+    test "returns the correct partition - inside", %{partition: partition} do
       assert Partition.partition_at(partition, {1, 1}) == {"test", 11, 5, {0, 0}}
+    end
+
+    test "returns the correct partition - bottom-left", %{partition: partition} do
+      assert Partition.partition_at(partition, {0, 0}) == {"test", 11, 5, {0, 0}}
+    end
+
+    test "returns the correct partition - bottom-right position", %{partition: partition} do
+      assert Partition.partition_at(partition, {0, 4}) == {"test", 11, 5, {0, 0}}
+    end
+
+    test "returns the correct partition - top-left", %{partition: partition} do
+      assert Partition.partition_at(partition, {4, 0}) == {"test", 11, 5, {0, 0}}
+    end
+
+    test "returns the correct partition - top-right", %{partition: partition} do
       assert Partition.partition_at(partition, {4, 4}) == {"test", 11, 5, {0, 0}}
-      assert Partition.partition_at(partition, {5, 5}) == {"test", 11, 5, {5, 5}}
-      assert Partition.partition_at(partition, {6, 6}) == {"test", 11, 5, {5, 5}}
-      assert Partition.partition_at(partition, {-1, -1}) == {"test", 11, 5, {-5, -5}}
+    end
+
+    test "returns the correct partition - inside negative", %{partition: partition} do
       assert Partition.partition_at(partition, {-4, -4}) == {"test", 11, 5, {-5, -5}}
+    end
+
+    test "returns the correct partition - bottom-left negative", %{partition: partition} do
       assert Partition.partition_at(partition, {-5, -5}) == {"test", 11, 5, {-5, -5}}
-      assert Partition.partition_at(partition, {-6, -6}) == {"test", 11, 5, {-10, -10}}
+    end
+
+    test "returns the correct partition - bottom-right negative", %{partition: partition} do
+      assert Partition.partition_at(partition, {-1, -5}) == {"test", 11, 5, {-5, -5}}
+    end
+
+    test "returns the correct partition - top-left negative", %{partition: partition} do
+      assert Partition.partition_at(partition, {-5, -1}) == {"test", 11, 5, {-5, -5}}
+    end
+
+    test "returns the correct partition - top-right negative", %{partition: partition} do
+      assert Partition.partition_at(partition, {-1, -1}) == {"test", 11, 5, {-5, -5}}
     end
   end
 
@@ -58,11 +85,27 @@ defmodule Mina.PartitionTest do
       [partition: %Partition{board: board, size: 4, position: {-4, -4}, reveals: %{}}]
     end
 
-    test "returns new partition with reveals and border positions", %{partition: partition} do
-      partition = %{partition | reveals: %{{-1, -1} => :mine}}
+    test "updates the partition with new reveals", %{partition: partition} do
+      {partition, _, _} = Partition.reveal(%{partition | reveals: %{{-3, -1} => :mine}}, {-2, -1})
 
-      assert {new_partition, reveals, border_positions} = Partition.reveal(partition, {-4, -1})
-      assert new_partition.reveals == Map.merge(partition.reveals, reveals)
+      assert partition.reveals == %{
+               {-2, -1} => :mine,
+               {-3, -1} => :mine
+             }
+    end
+
+    test "returns reveals", %{partition: partition} do
+      {_, reveals, _} = Partition.reveal(partition, {-2, -1})
+      assert reveals == %{{-2, -1} => :mine}
+    end
+
+    test "does not return existing reveals", %{partition: partition} do
+      {_, reveals, _} = Partition.reveal(%{partition | reveals: %{{-2, -1} => :mine}}, {-2, -1})
+      assert reveals == %{}
+    end
+
+    test "does not return reveals outside of bounds", %{partition: partition} do
+      {_, reveals, _} = Partition.reveal(partition, {-4, -1})
 
       assert reveals == %{
                {-4, -4} => {:proximity, 1},
@@ -77,17 +120,16 @@ defmodule Mina.PartitionTest do
                {-2, -3} => {:proximity, 1},
                {-2, -2} => {:proximity, 2}
              }
+    end
+
+    test "returns border positions", %{partition: partition} do
+      {_, _, border_positions} = Partition.reveal(partition, {-4, -1})
 
       assert border_positions == %{
                {"test", 11, 4, {-4, 0}} => [{-4, 0}, {-3, 0}],
                {"test", 11, 4, {-8, 0}} => [{-5, 0}],
                {"test", 11, 4, {-8, -4}} => [{-5, -4}, {-5, -3}, {-5, -2}, {-5, -1}]
              }
-    end
-
-    test "does not return any reveals when already revealed", %{partition: partition} do
-      partition = %{partition | reveals: %{{-4, -1} => {:proximity, 0}}}
-      assert {^partition, %{}, %{}} = Partition.reveal(partition, {-4, -1})
     end
   end
 end

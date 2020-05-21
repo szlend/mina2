@@ -1,5 +1,5 @@
 defmodule Mina.BoardTest do
-  use Mina.DataCase
+  use Mina.DataCase, async: true
 
   alias Mina.Board
 
@@ -20,14 +20,23 @@ defmodule Mina.BoardTest do
   end
 
   describe "build/2" do
-    test "builds a new board" do
+    test "builds a new board - min difficulty" do
       assert Board.build("test", 0) == %Board{seed: "test", difficulty: 0}
+    end
+
+    test "builds a new board - mid difficulty" do
       assert Board.build("test", 50) == %Board{seed: "test", difficulty: 50}
+    end
+
+    test "builds a new board - max difficulty" do
       assert Board.build("test", 100) == %Board{seed: "test", difficulty: 100}
     end
 
-    test "raises an error with invalid difficulty" do
+    test "raises an error with invalid difficulty - negative" do
       assert_raise FunctionClauseError, fn -> Board.build("test", -1) end
+    end
+
+    test "raises an error with invalid difficulty - positive" do
       assert_raise FunctionClauseError, fn -> Board.build("test", 101) end
     end
   end
