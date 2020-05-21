@@ -39,6 +39,12 @@ defmodule Mina.PartitionTest do
     end
   end
 
+  describe "id_for_spec_position/2" do
+    test "returns the correct id", %{spec: spec} do
+      assert Partition.id_for_spec_position(spec, {0, 0}) == {{"test", 11, 5}, {0, 0}}
+    end
+  end
+
   describe "partition_at/2" do
     test "returns the correct partition - inside", %{partition: partition} do
       assert Partition.partition_at(partition, {1, 1}) == {{"test", 11, 5}, {0, 0}}

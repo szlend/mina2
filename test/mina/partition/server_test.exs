@@ -1,5 +1,5 @@
 defmodule Mina.Partition.ServerTest do
-  use Mina.DataCase
+  use Mina.DataCase, async: true
   alias Mina.{Board, Partition}
 
   setup do
@@ -18,14 +18,32 @@ defmodule Mina.Partition.ServerTest do
 
     board = %Board{seed: "test", difficulty: 11}
     spec = %Partition.Spec{board: board, size: 5}
-    partition = %Partition{spec: spec, position: {0, 0}, reveals: %{}}
 
-    [partition: partition]
+    [spec: spec]
+  end
+
+  describe "start_link/1" do
+    test "starts a server", %{spec: spec} do
+      assert {:ok, _server} = Partition.Server.start_link(spec: spec, position: {0, 0})
+    end
+
+    test "starts a named server", %{spec: spec} do
+      name = __MODULE__.StartLinkNamed
+      {:ok, server} = Partition.Server.start_link(spec: spec, position: {0, 0}, name: name)
+      assert Keyword.get(Process.info(server), :registered_name) == name
+    end
+  end
+
+  describe "via_spec_position/2" do
+    test "builds a via-tuple", %{spec: spec} do
+      assert Partition.Server.via_spec_position(spec, {0, 0}) ==
+               {:via, Registry, {Partition.Registry, {{"test", 11, 5}, {0, 0}}}}
+    end
   end
 
   describe "reveal/2" do
-    setup %{partition: partition} do
-      {:ok, server} = Partition.Server.start_link(partition: partition)
+    setup %{spec: spec} do
+      {:ok, server} = Partition.Server.start_link(spec: spec, position: {0, 0})
       [server: server]
     end
 

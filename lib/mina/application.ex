@@ -7,6 +7,8 @@ defmodule Mina.Application do
 
   def start(_type, _args) do
     children = [
+      # Start the Partition registry
+      {Registry, keys: :unique, name: Mina.Partition.Registry},
       # Start the Ecto repository
       Mina.Repo,
       # Start the Telemetry supervisor

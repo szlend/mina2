@@ -29,6 +29,14 @@ defmodule Mina.Partition do
   end
 
   @doc """
+  Return the id of the partition with a partition `spec` at `position`.
+  """
+  @spec id_for_spec_position(Spec.t(), Board.position()) :: id
+  def id_for_spec_position(spec, position) do
+    {Spec.id(spec), position}
+  end
+
+  @doc """
   Return the id of a partition at `position` in the same board space as the specified `partition`.
   """
   @spec partition_at(t, Board.position()) :: id
