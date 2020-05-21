@@ -23,7 +23,7 @@ defmodule Mina.PartitionTest do
 
   describe "build/3" do
     test "builds a new partition", %{board: board} do
-      assert Partition.build(board, {0, 0}, 5) == %Partition{
+      assert Partition.build(board, 5, {0, 0}) == %Partition{
                board: board,
                size: 5,
                position: {0, 0},

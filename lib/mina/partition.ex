@@ -19,9 +19,9 @@ defmodule Mina.Partition do
   @doc """
   Build a new partition living in `board` space, at `position` and `size`.
   """
-  @spec build(Board.t(), Board.position(), non_neg_integer) :: t
-  def build(board, position, size) do
-    %Partition{board: board, position: position, size: size, reveals: %{}}
+  @spec build(Board.t(), non_neg_integer, Board.position()) :: t
+  def build(board, size, position) do
+    %Partition{board: board, size: size, position: position, reveals: %{}}
   end
 
   @doc """
