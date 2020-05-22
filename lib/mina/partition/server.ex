@@ -3,7 +3,7 @@ defmodule Mina.Partition.Server do
   The server responsible for managing the state of a `Mina.Partition`.
   """
 
-  use GenServer
+  use GenServer, restart: :transient
   alias Mina.{Board, Partition}
 
   @type start_opt ::
