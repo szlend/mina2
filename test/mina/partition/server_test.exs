@@ -47,13 +47,27 @@ defmodule Mina.Partition.ServerTest do
       [server: server]
     end
 
-    test "reveals a mine", %{server: server} do
-      assert Partition.Server.reveal(server, {1, 0}) == %{{1, 0} => :mine}
+    test "returns reveals", %{server: server} do
+      {reveals, _border_positions} = Partition.Server.reveal(server, [{0, 0}, {1, 0}])
+
+      assert reveals == %{
+               {0, 0} => {:proximity, 2},
+               {1, 0} => :mine
+             }
+    end
+
+    test "returns border_positions", %{server: server} do
+      {_reveals, border_positions} = Partition.Server.reveal(server, [{2, 2}])
+
+      assert border_positions == %{
+               {0, 5} => [{0, 5}, {1, 5}, {2, 5}, {3, 5}],
+               {5, 0} => [{5, 1}, {5, 2}, {5, 3}, {5, 4}]
+             }
     end
 
     test "keeps track of reveals", %{server: server} do
-      Partition.Server.reveal(server, {0, 0})
-      Partition.Server.reveal(server, {1, 0})
+      Partition.Server.reveal(server, [{0, 0}])
+      Partition.Server.reveal(server, [{1, 0}])
 
       assert :sys.get_state(server).reveals == %{
                {0, 0} => {:proximity, 2},

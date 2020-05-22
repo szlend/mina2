@@ -39,12 +39,12 @@ defmodule Mina.Partition.Server do
   end
 
   @doc """
-  Reveals tiles on a Partition.Server `pid`, starting from `position`.
-  Returns a map of new `reveals`.
+  Reveals tiles on a Partition `server` at `positions`. Returns a map of new `reveals`.
   """
-  @spec reveal(GenServer.server(), Board.position()) :: Board.reveals()
-  def reveal(server, position) do
-    GenServer.call(server, {:reveal, position})
+  @spec reveal(GenServer.server(), [Board.position()]) ::
+          {Board.reveals(), %{Partition.id() => [Board.position()]}}
+  def reveal(server, positions) do
+    GenServer.call(server, {:reveal, positions})
   end
 
   @impl true
@@ -57,8 +57,23 @@ defmodule Mina.Partition.Server do
   end
 
   @impl true
-  def handle_call({:reveal, position}, _from, partition) do
-    {partition, reveals, _border_positions} = Partition.reveal(partition, position)
-    {:reply, reveals, partition}
+  def handle_call({:reveal, positions}, _from, partition) do
+    {partition, reveals, border_positions} = reveal_positions(positions, partition, %{}, %{})
+    {:reply, {reveals, border_positions}, partition}
+  end
+
+  defp reveal_positions([], partition, reveals, border_positions) do
+    {partition, reveals, border_positions}
+  end
+
+  defp reveal_positions([position | positions], partition, reveals, border_positions) do
+    {partition, new_reveals, new_border_positions} = Partition.reveal(partition, position)
+
+    reveal_positions(
+      positions,
+      partition,
+      Map.merge(reveals, new_reveals),
+      Map.merge(border_positions, new_border_positions)
+    )
   end
 end
