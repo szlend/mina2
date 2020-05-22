@@ -6,11 +6,16 @@ defmodule Mina.Partition.Server do
   use GenServer
   alias Mina.{Board, Partition}
 
-  @type start_opt :: {:partition, Partition.t()}
+  @type start_opt ::
+          {:spec, Partition.Spec.t()}
+          | {:position, Board.position()}
+          | {:name, GenServer.name()}
+
   @type via :: {:via, Registry, {Partition.Registry, Partition.id()}}
 
   @doc """
   Starts a new `Partition.Server` with the given `opts`.
+
   ## Options
 
   The accepted options are:
