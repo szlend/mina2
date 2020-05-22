@@ -24,7 +24,7 @@ defmodule Mina.Partition.Server do
   * `:position` - the partition position on the board.
   * `:name` - the name of the server process.
   """
-  @spec start_link([start_opt]) :: :ignore | {:error, any} | {:ok, pid}
+  @spec start_link([start_opt]) :: {:ok, pid} | {:error, any}
   def start_link(opts) do
     {server_opts, opts} = Keyword.split(opts, [:name])
     GenServer.start_link(__MODULE__, opts, server_opts)

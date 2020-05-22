@@ -17,7 +17,7 @@ defmodule Mina.Partition.Supervisor do
 
   * `:name` - the name of the supervisor process.
   """
-  @spec start_link([start_opt]) :: :ignore | {:error, any} | {:ok, pid}
+  @spec start_link([start_opt]) :: {:ok, pid} | {:error, any}
   def start_link(opts \\ []) do
     {server_opts, opts} = Keyword.split(opts, [:name])
     DynamicSupervisor.start_link(__MODULE__, opts, server_opts)
@@ -27,7 +27,7 @@ defmodule Mina.Partition.Supervisor do
   Start a partition server under this supervisor
   """
   @spec start_child(Supervisor.supervisor(), Partition.Spec.t(), Board.position()) ::
-          :ignore | {:error, any} | {:ok, pid} | {:ok, pid, any}
+          {:ok, pid} | {:error, any}
   def start_child(supervisor, spec, position) do
     name = Partition.Server.via_position(spec, position)
     child_spec = {Partition.Server, spec: spec, position: position, name: name}
@@ -35,7 +35,7 @@ defmodule Mina.Partition.Supervisor do
   end
 
   @spec ensure_child(Supervisor.supervisor(), Partition.Spec.t(), Board.position()) ::
-          :ignore | {:error, any} | {:ok, any} | {:ok, pid, any}
+          {:ok, pid} | {:error, any}
   def ensure_child(supervisor, spec, position) do
     with {:error, {:already_started, pid}} <- start_child(supervisor, spec, position) do
       {:ok, pid}
