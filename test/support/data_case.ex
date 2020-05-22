@@ -52,4 +52,13 @@ defmodule Mina.DataCase do
       end)
     end)
   end
+
+  @doc """
+  A helper that resets the Mina application back to initial state.
+  """
+  def reset_state() do
+    for {_, pid, _, _} <- DynamicSupervisor.which_children(Mina.Partition.Supervisor) do
+      :ok = DynamicSupervisor.terminate_child(Mina.Partition.Supervisor, pid)
+    end
+  end
 end
