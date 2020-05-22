@@ -1,5 +1,5 @@
 defmodule Mina.Partition.SupervisorTest do
-  use Mina.DataCase, async: false
+  use Mina.DataCase, async: true
   alias Mina.{Board, Partition}
 
   setup do
