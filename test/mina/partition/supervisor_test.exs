@@ -27,7 +27,7 @@ defmodule Mina.Partition.SupervisorTest do
 
     test "it names the partition server", %{supervisor: supervisor, spec: spec} do
       {:ok, _server} = Partition.Supervisor.start_child(supervisor, spec, {0, 0})
-      assert GenServer.whereis(Partition.Server.via_spec_position(spec, {0, 0})) != nil
+      assert GenServer.whereis(Partition.Server.via_position(spec, {0, 0})) != nil
     end
   end
 

@@ -23,28 +23,20 @@ defmodule Mina.Partition do
   end
 
   @doc """
+  Return the id of a partition from a partition `spec` at `position`.
+  """
+  @spec id_at(Spec.t(), Board.position()) :: id
+  def id_at(spec, {x, y} = _position) do
+    position = {x - Integer.mod(x, spec.size), y - Integer.mod(y, spec.size)}
+    {Spec.id(spec), position}
+  end
+
+  @doc """
   Return the id of the `partition`.
   """
   @spec id(t) :: id
   def id(partition) do
     {Spec.id(partition.spec), partition.position}
-  end
-
-  @doc """
-  Return the id of the partition with a partition `spec` at `position`.
-  """
-  @spec id_for_spec_position(Spec.t(), Board.position()) :: id
-  def id_for_spec_position(spec, position) do
-    {Spec.id(spec), position}
-  end
-
-  @doc """
-  Return the id of a partition at `position` in the same board space as the specified `partition`.
-  """
-  @spec partition_at(t, Board.position()) :: id
-  def partition_at(partition, {x, y} = _position) do
-    position = {x - Integer.mod(x, partition.spec.size), y - Integer.mod(y, partition.spec.size)}
-    {Spec.id(partition.spec), position}
   end
 
   @doc """
@@ -61,7 +53,7 @@ defmodule Mina.Partition do
       # reveal with bounds that include the neighbouring border
       |> Board.reveal(position, reveals: partition.reveals, bounds: extended_bounds(partition))
       # group the reveals by partition id
-      |> Enum.group_by(fn {position, _} -> partition_at(partition, position) end)
+      |> Enum.group_by(fn {position, _} -> id_at(partition.spec, position) end)
       # cast each partition's reveals into a map
       |> Enum.map(fn {partition_id, reveals} -> {partition_id, Map.new(reveals)} end)
       # split internal reveals and border reveals

@@ -34,9 +34,9 @@ defmodule Mina.Partition.ServerTest do
     end
   end
 
-  describe "via_spec_position/2" do
+  describe "via_position/2" do
     test "builds a via-tuple", %{spec: spec} do
-      assert Partition.Server.via_spec_position(spec, {0, 0}) ==
+      assert Partition.Server.via_position(spec, {0, 0}) ==
                {:via, Registry, {Partition.Registry, {{"test", 11, 5}, {0, 0}}}}
     end
   end

@@ -37,57 +37,51 @@ defmodule Mina.PartitionTest do
     end
   end
 
+  describe "id_at/2" do
+    test "returns the correct partition id - inside", %{spec: spec} do
+      assert Partition.id_at(spec, {1, 1}) == {{"test", 11, 5}, {0, 0}}
+    end
+
+    test "returns the correct partition id - bottom-left", %{spec: spec} do
+      assert Partition.id_at(spec, {0, 0}) == {{"test", 11, 5}, {0, 0}}
+    end
+
+    test "returns the correct partition id - bottom-right position", %{spec: spec} do
+      assert Partition.id_at(spec, {0, 4}) == {{"test", 11, 5}, {0, 0}}
+    end
+
+    test "returns the correct partition id - top-left", %{spec: spec} do
+      assert Partition.id_at(spec, {4, 0}) == {{"test", 11, 5}, {0, 0}}
+    end
+
+    test "returns the correct partition id - top-right", %{spec: spec} do
+      assert Partition.id_at(spec, {4, 4}) == {{"test", 11, 5}, {0, 0}}
+    end
+
+    test "returns the correct partition id - inside negative", %{spec: spec} do
+      assert Partition.id_at(spec, {-4, -4}) == {{"test", 11, 5}, {-5, -5}}
+    end
+
+    test "returns the correct partition id - bottom-left negative", %{spec: spec} do
+      assert Partition.id_at(spec, {-5, -5}) == {{"test", 11, 5}, {-5, -5}}
+    end
+
+    test "returns the correct partition id - bottom-right negative", %{spec: spec} do
+      assert Partition.id_at(spec, {-1, -5}) == {{"test", 11, 5}, {-5, -5}}
+    end
+
+    test "returns the correct partition id - top-left negative", %{spec: spec} do
+      assert Partition.id_at(spec, {-5, -1}) == {{"test", 11, 5}, {-5, -5}}
+    end
+
+    test "returns the correct partition id - top-right negative", %{spec: spec} do
+      assert Partition.id_at(spec, {-1, -1}) == {{"test", 11, 5}, {-5, -5}}
+    end
+  end
+
   describe "id/1" do
-    test "returns the correct id", %{partition: partition} do
+    test "returns the correct partition id", %{partition: partition} do
       assert Partition.id(partition) == {{"test", 11, 5}, {0, 0}}
-    end
-  end
-
-  describe "id_for_spec_position/2" do
-    test "returns the correct id", %{spec: spec} do
-      assert Partition.id_for_spec_position(spec, {0, 0}) == {{"test", 11, 5}, {0, 0}}
-    end
-  end
-
-  describe "partition_at/2" do
-    test "returns the correct partition - inside", %{partition: partition} do
-      assert Partition.partition_at(partition, {1, 1}) == {{"test", 11, 5}, {0, 0}}
-    end
-
-    test "returns the correct partition - bottom-left", %{partition: partition} do
-      assert Partition.partition_at(partition, {0, 0}) == {{"test", 11, 5}, {0, 0}}
-    end
-
-    test "returns the correct partition - bottom-right position", %{partition: partition} do
-      assert Partition.partition_at(partition, {0, 4}) == {{"test", 11, 5}, {0, 0}}
-    end
-
-    test "returns the correct partition - top-left", %{partition: partition} do
-      assert Partition.partition_at(partition, {4, 0}) == {{"test", 11, 5}, {0, 0}}
-    end
-
-    test "returns the correct partition - top-right", %{partition: partition} do
-      assert Partition.partition_at(partition, {4, 4}) == {{"test", 11, 5}, {0, 0}}
-    end
-
-    test "returns the correct partition - inside negative", %{partition: partition} do
-      assert Partition.partition_at(partition, {-4, -4}) == {{"test", 11, 5}, {-5, -5}}
-    end
-
-    test "returns the correct partition - bottom-left negative", %{partition: partition} do
-      assert Partition.partition_at(partition, {-5, -5}) == {{"test", 11, 5}, {-5, -5}}
-    end
-
-    test "returns the correct partition - bottom-right negative", %{partition: partition} do
-      assert Partition.partition_at(partition, {-1, -5}) == {{"test", 11, 5}, {-5, -5}}
-    end
-
-    test "returns the correct partition - top-left negative", %{partition: partition} do
-      assert Partition.partition_at(partition, {-5, -1}) == {{"test", 11, 5}, {-5, -5}}
-    end
-
-    test "returns the correct partition - top-right negative", %{partition: partition} do
-      assert Partition.partition_at(partition, {-1, -1}) == {{"test", 11, 5}, {-5, -5}}
     end
   end
 

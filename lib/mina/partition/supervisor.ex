@@ -20,7 +20,7 @@ defmodule Mina.Partition.Supervisor do
   @spec start_child(Supervisor.supervisor(), Partition.Spec.t(), Board.position()) ::
           :ignore | {:error, any} | {:ok, pid} | {:ok, pid, any}
   def start_child(supervisor, spec, position) do
-    name = Partition.Server.via_spec_position(spec, position)
+    name = Partition.Server.via_position(spec, position)
     child_spec = {Partition.Server, spec: spec, position: position, name: name}
     DynamicSupervisor.start_child(supervisor, child_spec)
   end

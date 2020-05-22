@@ -28,9 +28,9 @@ defmodule Mina.Partition.Server do
   @doc """
   Get the server via-tuple for a given partition `spec` and `position`.
   """
-  @spec via_spec_position(Partition.Spec.t(), Board.position()) :: via
-  def via_spec_position(spec, position) do
-    {:via, Registry, {Partition.Registry, Partition.id_for_spec_position(spec, position)}}
+  @spec via_position(Partition.Spec.t(), Board.position()) :: via
+  def via_position(spec, position) do
+    {:via, Registry, {Partition.Registry, Partition.id_at(spec, position)}}
   end
 
   @doc """
