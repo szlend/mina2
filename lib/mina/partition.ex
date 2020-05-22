@@ -68,6 +68,6 @@ defmodule Mina.Partition do
 
   # The bounds of the partition, including the border
   defp extended_bounds(%{spec: %{size: size}, position: {x, y}} = _partition) do
-    {{x - 1, y - 1}, {x + size + 1, y + size + 1}}
+    {{x - 1, y - 1}, {x + size, y + size}}
   end
 end

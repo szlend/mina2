@@ -90,7 +90,7 @@ defmodule Mina.PartitionTest do
       spec = %Partition.Spec{board: board, size: 4}
       partition = %Partition{spec: spec, position: {-4, -4}, reveals: %{}}
 
-      [partition: partition]
+      [spec: spec, partition: partition]
     end
 
     test "updates the partition with new reveals", %{partition: partition} do
@@ -130,13 +130,25 @@ defmodule Mina.PartitionTest do
              }
     end
 
-    test "returns border positions", %{partition: partition} do
+    test "returns border positions - top-left", %{spec: spec} do
+      partition = %Partition{spec: spec, position: {-4, -4}, reveals: %{}}
       {_, _, border_positions} = Partition.reveal(partition, {-4, -1})
 
       assert border_positions == %{
                {{"test", 11, 4}, {-4, 0}} => [{-4, 0}, {-3, 0}],
                {{"test", 11, 4}, {-8, 0}} => [{-5, 0}],
                {{"test", 11, 4}, {-8, -4}} => [{-5, -4}, {-5, -3}, {-5, -2}, {-5, -1}]
+             }
+    end
+
+    test "returns border positions - top-right", %{spec: spec} do
+      partition = %Partition{spec: spec, position: {0, 0}, reveals: %{}}
+      {_, _, border_positions} = Partition.reveal(partition, {3, 3})
+
+      assert border_positions == %{
+               {{"test", 11, 4}, {0, 4}} => [{0, 4}, {1, 4}, {2, 4}, {3, 4}],
+               {{"test", 11, 4}, {4, 0}} => [{4, 0}, {4, 1}, {4, 2}, {4, 3}],
+               {{"test", 11, 4}, {4, 4}} => [{4, 4}]
              }
     end
   end
