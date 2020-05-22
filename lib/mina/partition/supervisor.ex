@@ -6,12 +6,21 @@ defmodule Mina.Partition.Supervisor do
   use DynamicSupervisor
   alias Mina.{Board, Partition}
 
+  @type start_opt :: {:name, Supervisor.name()}
+
   @doc """
-  Start the partition supervisor. Accepts no additional options.
+  Start the partition supervisor with the given `opts`.
+
+  ## Options
+
+  The accepted options are:
+
+  * `:name` - the name of the supervisor process.
   """
-  @spec start_link(any) :: :ignore | {:error, any} | {:ok, pid}
+  @spec start_link([start_opt]) :: :ignore | {:error, any} | {:ok, pid}
   def start_link(opts \\ []) do
-    DynamicSupervisor.start_link(__MODULE__, opts)
+    {server_opts, opts} = Keyword.split(opts, [:name])
+    DynamicSupervisor.start_link(__MODULE__, opts, server_opts)
   end
 
   @doc """
