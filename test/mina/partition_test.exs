@@ -31,6 +31,10 @@ defmodule Mina.PartitionTest do
                reveals: %{}
              }
     end
+
+    test "raises an error with invalid position", %{spec: spec} do
+      assert_raise FunctionClauseError, fn -> Partition.build(spec, {1, 1}) end
+    end
   end
 
   describe "id/1" do

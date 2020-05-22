@@ -13,10 +13,12 @@ defmodule Mina.Partition do
   defstruct [:spec, :position, :reveals]
 
   @doc """
-  Build a new partition from a partition `spec` at `position`.
+  Build a new partition from a partition `spec` at `position`. The position coordinates
+  have to be a multiple of the partition spec size.
   """
   @spec build(Spec.t(), Board.position()) :: t
-  def build(spec, position) do
+  def build(%{size: size} = spec, {x, y} = position)
+      when rem(x, size) == 0 and rem(y, size) == 0 do
     %Partition{spec: spec, position: position, reveals: %{}}
   end
 
