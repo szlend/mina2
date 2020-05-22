@@ -1,4 +1,8 @@
 defmodule MinaWeb.PageLive do
+  @moduledoc """
+  Live search example
+  """
+
   use MinaWeb, :live_view
 
   @impl true

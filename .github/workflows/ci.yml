@@ -35,5 +35,8 @@ jobs:
       - name: Check formatting
         run: docker-compose run mina mix format --check-formatted 2> /dev/null
 
+      - name: Run linter
+        run: docker-compose run mina mix credo 2> /dev/null
+
       - name: Run tests
         run: docker-compose run mina mix test 2> /dev/null
