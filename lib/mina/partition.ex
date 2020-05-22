@@ -23,11 +23,19 @@ defmodule Mina.Partition do
   end
 
   @doc """
+  Returns the position of the partition containing the board `position` with `spec`.
+  """
+  @spec position(Spec.t(), Board.position()) :: Board.position()
+  def position(spec, {x, y} = _position) do
+    {x - Integer.mod(x, spec.size), y - Integer.mod(y, spec.size)}
+  end
+
+  @doc """
   Return the id of a partition from a partition `spec` at `position`.
   """
   @spec id_at(Spec.t(), Board.position()) :: id
-  def id_at(spec, {x, y} = _position) do
-    position = {x - Integer.mod(x, spec.size), y - Integer.mod(y, spec.size)}
+  def id_at(%{size: size} = spec, {x, y} = position)
+      when rem(x, size) == 0 and rem(y, size) == 0 do
     {Spec.id(spec), position}
   end
 
@@ -45,21 +53,19 @@ defmodule Mina.Partition do
   revealed further.
   """
   @spec reveal(t, Board.position()) :: {t, Board.reveals(), %{id => [Board.position()]}}
-  def reveal(partition, position) do
-    id = id(partition)
-
+  def reveal(%{spec: spec, reveals: reveals} = partition, position) do
     {internal_reveals, border_reveals} =
-      partition.spec.board
+      spec.board
       # reveal with bounds that include the neighbouring border
-      |> Board.reveal(position, reveals: partition.reveals, bounds: extended_bounds(partition))
-      # group the reveals by partition id
-      |> Enum.group_by(fn {position, _} -> id_at(partition.spec, position) end)
+      |> Board.reveal(position, reveals: reveals, bounds: extended_bounds(partition))
+      # group the reveals by partition position
+      |> Enum.group_by(fn {position, _} -> position(spec, position) end)
       # cast each partition's reveals into a map
-      |> Enum.map(fn {partition_id, reveals} -> {partition_id, Map.new(reveals)} end)
+      |> Enum.map(fn {position, reveals} -> {position, Map.new(reveals)} end)
       # split internal reveals and border reveals
-      |> Enum.split_with(fn {partition_id, _} -> partition_id == id end)
+      |> Enum.split_with(fn {position, _} -> position == partition.position end)
 
-    reveals = Map.new(internal_reveals)[id] || %{}
+    reveals = Map.new(internal_reveals)[partition.position] || %{}
     border_positions = Map.new(border_reveals, fn {id, reveals} -> {id, Map.keys(reveals)} end)
     partition = %{partition | reveals: Map.merge(partition.reveals, reveals)}
 
