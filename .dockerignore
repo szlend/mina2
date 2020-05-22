@@ -16,3 +16,4 @@
 !mix.exs
 !mix.lock
 !.formatter.exs
+!.credo.exs
