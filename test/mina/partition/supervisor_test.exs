@@ -11,19 +11,13 @@ defmodule Mina.Partition.SupervisorTest do
 
   describe "start_link/1" do
     test "starts a supervisor" do
-      assert {:ok, _supervisor} = Partition.Supervisor.start_link([])
-    end
-
-    test "starts a named supervisor" do
-      name = __MODULE__.StartLinkNamed
-      {:ok, supervisor} = Partition.Supervisor.start_link(name: name)
-      assert Keyword.get(Process.info(supervisor), :registered_name) == name
+      assert {:ok, _supervisor} = Partition.Supervisor.start_link(name: __MODULE__)
     end
   end
 
   describe "start_child/3" do
     setup do
-      {:ok, supervisor} = Partition.Supervisor.start_link()
+      {:ok, supervisor} = Partition.Supervisor.start_link(name: __MODULE__)
       [supervisor: supervisor]
     end
 
@@ -39,7 +33,7 @@ defmodule Mina.Partition.SupervisorTest do
 
   describe "ensure_child/3" do
     setup %{spec: spec} do
-      {:ok, supervisor} = Partition.Supervisor.start_link()
+      {:ok, supervisor} = Partition.Supervisor.start_link(name: __MODULE__)
       {:ok, server} = Partition.Supervisor.start_child(supervisor, spec, {0, 0})
       [supervisor: supervisor, server: server]
     end

@@ -3,7 +3,7 @@ defmodule Mina.Partition.Server do
   The server responsible for managing the state of a `Mina.Partition`.
   """
 
-  use GenServer, restart: :transient
+  use GenServer
   alias Mina.{Board, Partition}
 
   @type start_opt ::
@@ -11,7 +11,7 @@ defmodule Mina.Partition.Server do
           | {:position, Board.position()}
           | {:name, GenServer.name()}
 
-  @type via :: {:via, Registry, {Partition.Registry, Partition.id()}}
+  @type via :: {:via, Horde.Registry, {Partition.Registry, Partition.id()}}
 
   @doc """
   Starts a new `Partition.Server` with the given `opts`.
@@ -35,7 +35,7 @@ defmodule Mina.Partition.Server do
   """
   @spec via_position(Partition.Spec.t(), Board.position()) :: via
   def via_position(spec, position) do
-    {:via, Registry, {Partition.Registry, Partition.id_at(spec, position)}}
+    {:via, Horde.Registry, {Partition.Registry, Partition.id_at(spec, position)}}
   end
 
   @doc """
@@ -45,6 +45,11 @@ defmodule Mina.Partition.Server do
           {Board.reveals(), %{Partition.id() => [Board.position()]}}
   def reveal(server, positions) do
     GenServer.call(server, {:reveal, positions})
+  end
+
+  def child_spec(opts) do
+    {id, opts} = Keyword.pop(opts, :id, __MODULE__)
+    %{id: id, restart: :transient, start: {__MODULE__, :start_link, [opts]}}
   end
 
   @impl true

@@ -3,7 +3,7 @@ defmodule Mina.Partition.Supervisor do
   The dynamic supervisor for `Mina.Partition.Server`.
   """
 
-  use DynamicSupervisor
+  use Horde.DynamicSupervisor
   alias Mina.{Board, Partition}
 
   @type start_opt :: {:name, Supervisor.name()}
@@ -19,8 +19,8 @@ defmodule Mina.Partition.Supervisor do
   """
   @spec start_link([start_opt]) :: {:ok, pid} | {:error, any}
   def start_link(opts \\ []) do
-    {server_opts, opts} = Keyword.split(opts, [:name])
-    DynamicSupervisor.start_link(__MODULE__, opts, server_opts)
+    {name, opts} = Keyword.pop!(opts, :name)
+    Horde.DynamicSupervisor.start_link(__MODULE__, opts, name: name)
   end
 
   @doc """
@@ -29,9 +29,10 @@ defmodule Mina.Partition.Supervisor do
   @spec start_child(Supervisor.supervisor(), Partition.Spec.t(), Board.position()) ::
           {:ok, pid} | {:error, any}
   def start_child(supervisor, spec, position) do
+    id = Partition.id_at(spec, position)
     name = Partition.Server.via_position(spec, position)
-    child_spec = {Partition.Server, spec: spec, position: position, name: name}
-    DynamicSupervisor.start_child(supervisor, child_spec)
+    child_spec = {Partition.Server, spec: spec, position: position, id: id, name: name}
+    Horde.DynamicSupervisor.start_child(supervisor, child_spec)
   end
 
   @spec ensure_child(Supervisor.supervisor(), Partition.Spec.t(), Board.position()) ::
@@ -44,6 +45,6 @@ defmodule Mina.Partition.Supervisor do
 
   @impl true
   def init(_opts) do
-    DynamicSupervisor.init(strategy: :one_for_one)
+    Horde.DynamicSupervisor.init(strategy: :one_for_one)
   end
 end
