@@ -3,22 +3,21 @@ defmodule Mina.Partition.SupervisorTest do
   alias Mina.{Board, Partition}
 
   setup do
-    name = :"#{__MODULE__}.N#{:random.uniform(100_000_000)}"
     board = %Board{seed: "test", difficulty: 11}
     spec = %Partition.Spec{board: board, size: 5}
 
-    [name: name, spec: spec]
+    [spec: spec]
   end
 
   describe "start_link/1" do
-    test "starts a supervisor", %{name: name} do
-      assert {:ok, _supervisor} = Partition.Supervisor.start_link(name: name)
+    test "starts a supervisor" do
+      assert {:ok, _supervisor} = start_supervised({Partition.Supervisor, name: __MODULE__})
     end
   end
 
   describe "start_child/3" do
-    setup %{name: name} do
-      {:ok, supervisor} = Partition.Supervisor.start_link(name: name)
+    setup do
+      {:ok, supervisor} = start_supervised({Partition.Supervisor, name: __MODULE__})
       [supervisor: supervisor]
     end
 
@@ -33,8 +32,8 @@ defmodule Mina.Partition.SupervisorTest do
   end
 
   describe "ensure_child/3" do
-    setup %{name: name, spec: spec} do
-      {:ok, supervisor} = Partition.Supervisor.start_link(name: name)
+    setup %{spec: spec} do
+      {:ok, supervisor} = start_supervised({Partition.Supervisor, name: __MODULE__})
       {:ok, server} = Partition.Supervisor.start_child(supervisor, spec, {0, 0})
       [supervisor: supervisor, server: server]
     end
