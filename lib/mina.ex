@@ -18,15 +18,11 @@ defmodule Mina do
   defp do_reveal_tile(_spec, _partition_position, _positions, 0), do: %{}
 
   defp do_reveal_tile(spec, partition_position, positions, depth) do
-    {:ok, server} = get_partition(spec, partition_position)
+    {:ok, server} = Partition.Supervisor.ensure_partition(spec, partition_position)
     {reveals, border_positions} = Partition.Server.reveal(server, positions)
 
     Enum.reduce(border_positions, reveals, fn {partition_position, positions}, reveals ->
       Map.merge(reveals, do_reveal_tile(spec, partition_position, positions, depth - 1))
     end)
-  end
-
-  defp get_partition(spec, position) do
-    Partition.Supervisor.ensure_child(Partition.Supervisor, spec, position)
   end
 end

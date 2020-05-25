@@ -15,26 +15,26 @@ defmodule Mina.Partition.SupervisorTest do
     end
   end
 
-  describe "start_child/3" do
+  describe "start_partition/3" do
     setup do
       {:ok, supervisor} = start_supervised({Partition.Supervisor, name: __MODULE__})
       [supervisor: supervisor]
     end
 
     test "starts a partition server", %{supervisor: supervisor, spec: spec} do
-      assert {:ok, _server} = Partition.Supervisor.start_child(supervisor, spec, {0, 0})
+      assert {:ok, _server} = Partition.Supervisor.start_partition(supervisor, spec, {0, 0})
     end
 
     test "it names the partition server", %{supervisor: supervisor, spec: spec} do
-      {:ok, _server} = Partition.Supervisor.start_child(supervisor, spec, {0, 0})
+      {:ok, _server} = Partition.Supervisor.start_partition(supervisor, spec, {0, 0})
       assert GenServer.whereis(Partition.Server.via_position(spec, {0, 0})) != nil
     end
   end
 
-  describe "ensure_child/3" do
+  describe "ensure_partition/3" do
     setup %{spec: spec} do
       {:ok, supervisor} = start_supervised({Partition.Supervisor, name: __MODULE__})
-      {:ok, server} = Partition.Supervisor.start_child(supervisor, spec, {0, 0})
+      {:ok, server} = Partition.Supervisor.start_partition(supervisor, spec, {0, 0})
       [supervisor: supervisor, server: server]
     end
 
@@ -43,7 +43,7 @@ defmodule Mina.Partition.SupervisorTest do
       server: server,
       spec: spec
     } do
-      {:ok, new_server} = Partition.Supervisor.ensure_child(supervisor, spec, {5, 0})
+      {:ok, new_server} = Partition.Supervisor.ensure_partition(supervisor, spec, {5, 0})
       assert new_server != server
     end
 
@@ -52,7 +52,7 @@ defmodule Mina.Partition.SupervisorTest do
       server: server,
       spec: spec
     } do
-      {:ok, new_server} = Partition.Supervisor.ensure_child(supervisor, spec, {0, 0})
+      {:ok, new_server} = Partition.Supervisor.ensure_partition(supervisor, spec, {0, 0})
       assert new_server == server
     end
   end

@@ -24,23 +24,46 @@ defmodule Mina.Partition.Supervisor do
   end
 
   @doc """
-  Start a partition server under this supervisor
+  Start a partition server under a `supervisor`.
   """
-  @spec start_child(Supervisor.supervisor(), Partition.Spec.t(), Board.position()) ::
+  @spec start_partition(Supervisor.supervisor(), Partition.Spec.t(), Board.position()) ::
           {:ok, pid} | {:error, any}
-  def start_child(supervisor, spec, position) do
+  def start_partition(supervisor \\ __MODULE__, spec, position) do
     id = Partition.id_at(spec, position)
     name = Partition.Server.via_position(spec, position)
     child_spec = {Partition.Server, spec: spec, position: position, id: id, name: name}
     Horde.DynamicSupervisor.start_child(supervisor, child_spec)
   end
 
-  @spec ensure_child(Supervisor.supervisor(), Partition.Spec.t(), Board.position()) ::
+  @doc """
+  Ensure a partition server is running under a `supervisor`. This will start a new server
+  if one is not yet running.
+  """
+  @spec ensure_partition(Supervisor.supervisor(), Partition.Spec.t(), Board.position()) ::
           {:ok, pid} | {:error, any}
-  def ensure_child(supervisor, spec, position) do
-    with {:error, {:already_started, pid}} <- start_child(supervisor, spec, position) do
+  def ensure_partition(supervisor \\ __MODULE__, spec, position) do
+    with {:error, {:already_started, pid}} <- start_partition(supervisor, spec, position) do
       {:ok, pid}
     end
+  end
+
+  @doc """
+  Terminate a partition server with `pid` running under `supervisor`.
+  """
+  @spec terminate_child(Supervisor.supervisor(), pid) ::
+          :ok | {:error, :not_found | {:node_dead_or_shutting_down, binary}}
+  def terminate_child(supervisor \\ __MODULE__, pid) do
+    Horde.DynamicSupervisor.terminate_child(supervisor, pid)
+  end
+
+  @doc """
+  Return a list of partition server pids running under `supervisor`.
+  """
+  @spec children(Supervisor.supervisor()) :: [pid]
+  def children(supervisor \\ __MODULE__) do
+    supervisor
+    |> Horde.DynamicSupervisor.which_children()
+    |> Enum.map(fn {:undefined, pid, _type, _modules} -> pid end)
   end
 
   @impl true
