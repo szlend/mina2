@@ -22,7 +22,7 @@ defmodule MinaTest do
     board = %Board{seed: "test", difficulty: 11}
     spec = %Partition.Spec{board: board, size: 3}
 
-    [spec: spec]
+    [board: board, spec: spec]
   end
 
   describe "reveal_tile/3" do
@@ -62,6 +62,43 @@ defmodule MinaTest do
                {2, -2} => {:proximity, 1},
                {2, -1} => {:proximity, 2}
              }
+    end
+
+    test "concurrently reveals expected results", %{board: board, spec: spec} do
+      bounds = {{bot_x, bot_y}, {top_x, top_y}} = {{-12, -12}, {11, 11}}
+      positions = for x <- bot_x..top_x, y <- bot_y..top_y, do: {x, y}
+
+      # reveal all the positions at random concurrently
+      positions
+      |> Enum.shuffle()
+      |> Task.async_stream(
+        fn position -> Mina.reveal_tile(spec, position) end,
+        max_concurrency: 128,
+        ordered: false
+      )
+      |> Stream.run()
+
+      # get all the reveals from partitions
+      partitioned_reveals =
+        positions
+        |> Enum.map(fn position -> Partition.position(spec, position) end)
+        |> Enum.uniq()
+        |> Enum.reduce(%{}, fn position, reveals ->
+          {:ok, pid} = Partition.Supervisor.ensure_child(Partition.Supervisor, spec, position)
+          partition = :sys.get_state(pid)
+          Map.merge(reveals, partition.reveals)
+        end)
+
+      # simulate the reveals without partitions
+      board_reveals =
+        Enum.reduce(positions, %{}, fn position, reveals ->
+          new_reveals = Board.reveal(board, position, bounds: bounds, reveals: reveals)
+          Map.merge(reveals, new_reveals)
+        end)
+
+      # partitioned reveals should match board reveals
+      assert Enum.count(partitioned_reveals) == Enum.count(board_reveals)
+      assert partitioned_reveals == board_reveals
     end
   end
 end
