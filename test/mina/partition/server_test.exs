@@ -24,13 +24,14 @@ defmodule Mina.Partition.ServerTest do
 
   describe "start_link/1" do
     test "starts a server", %{spec: spec} do
-      assert {:ok, _server} = Partition.Server.start_link(spec: spec, position: {0, 0})
+      assert {:ok, _server} = start_supervised({Partition.Server, spec: spec, position: {0, 0}})
     end
 
     test "starts a named server", %{spec: spec} do
-      name = __MODULE__.StartLinkNamed
-      {:ok, server} = Partition.Server.start_link(spec: spec, position: {0, 0}, name: name)
-      assert Keyword.get(Process.info(server), :registered_name) == name
+      {:ok, server} =
+        start_supervised({Partition.Server, spec: spec, position: {0, 0}, name: __MODULE__})
+
+      assert Keyword.get(Process.info(server), :registered_name) == __MODULE__
     end
   end
 
@@ -43,7 +44,7 @@ defmodule Mina.Partition.ServerTest do
 
   describe "reveal/2" do
     setup %{spec: spec} do
-      {:ok, server} = Partition.Server.start_link(spec: spec, position: {0, 0})
+      {:ok, server} = start_supervised({Partition.Server, spec: spec, position: {0, 0}})
       [server: server]
     end
 
