@@ -1,12 +1,9 @@
 defmodule Mina.Partition.SupervisorTest do
   use Mina.DataCase, async: true
-  alias Mina.{Board, Partition}
+  alias Mina.{Partition, World}
 
   setup do
-    board = %Board{seed: "test", difficulty: 11}
-    spec = %Partition.Spec{board: board, size: 5}
-
-    [spec: spec]
+    [world: %World{seed: "test", difficulty: 11, partition_size: 5}]
   end
 
   describe "start_link/1" do
@@ -21,38 +18,38 @@ defmodule Mina.Partition.SupervisorTest do
       [supervisor: supervisor]
     end
 
-    test "starts a partition server", %{supervisor: supervisor, spec: spec} do
-      assert {:ok, _server} = Partition.Supervisor.start_partition(supervisor, spec, {0, 0})
+    test "starts a partition server", %{supervisor: supervisor, world: world} do
+      assert {:ok, _server} = Partition.Supervisor.start_partition(supervisor, world, {0, 0})
     end
 
-    test "it names the partition server", %{supervisor: supervisor, spec: spec} do
-      {:ok, _server} = Partition.Supervisor.start_partition(supervisor, spec, {0, 0})
-      assert GenServer.whereis(Partition.Server.via_position(spec, {0, 0})) != nil
+    test "it names the partition server", %{supervisor: supervisor, world: world} do
+      {:ok, _server} = Partition.Supervisor.start_partition(supervisor, world, {0, 0})
+      assert GenServer.whereis(Partition.Server.via_position(world, {0, 0})) != nil
     end
   end
 
   describe "ensure_partition/3" do
-    setup %{spec: spec} do
+    setup %{world: world} do
       {:ok, supervisor} = start_supervised({Partition.Supervisor, name: __MODULE__})
-      {:ok, server} = Partition.Supervisor.start_partition(supervisor, spec, {0, 0})
+      {:ok, server} = Partition.Supervisor.start_partition(supervisor, world, {0, 0})
       [supervisor: supervisor, server: server]
     end
 
     test "starts a new partition server if it does not yet exist", %{
       supervisor: supervisor,
       server: server,
-      spec: spec
+      world: world
     } do
-      {:ok, new_server} = Partition.Supervisor.ensure_partition(supervisor, spec, {5, 0})
+      {:ok, new_server} = Partition.Supervisor.ensure_partition(supervisor, world, {5, 0})
       assert new_server != server
     end
 
     test "returns the existing partition server if it already exists", %{
       supervisor: supervisor,
       server: server,
-      spec: spec
+      world: world
     } do
-      {:ok, new_server} = Partition.Supervisor.ensure_partition(supervisor, spec, {0, 0})
+      {:ok, new_server} = Partition.Supervisor.ensure_partition(supervisor, world, {0, 0})
       assert new_server == server
     end
   end

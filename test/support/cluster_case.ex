@@ -22,7 +22,7 @@ defmodule Mina.ClusterCase do
   @doc """
   A helper that resets the Mina application back to initial state within a cluster.
   """
-  def reset_state() do
+  def reset_state do
     MinaHelpers.reset_cluster_state()
     MinaHelpers.reset_state()
   end

@@ -15,6 +15,7 @@ defmodule Mina.DataCase do
   """
 
   use ExUnit.CaseTemplate
+  alias Ecto.Adapters.SQL
 
   using do
     quote do
@@ -28,10 +29,10 @@ defmodule Mina.DataCase do
   end
 
   setup tags do
-    :ok = Ecto.Adapters.SQL.Sandbox.checkout(Mina.Repo)
+    :ok = SQL.Sandbox.checkout(Mina.Repo)
 
     unless tags[:async] do
-      Ecto.Adapters.SQL.Sandbox.mode(Mina.Repo, {:shared, self()})
+      SQL.Sandbox.mode(Mina.Repo, {:shared, self()})
     end
 
     :ok
@@ -56,7 +57,7 @@ defmodule Mina.DataCase do
   @doc """
   A helper that resets the Mina application back to initial state.
   """
-  def reset_state() do
+  def reset_state do
     Mina.MinaHelpers.reset_state()
   end
 end

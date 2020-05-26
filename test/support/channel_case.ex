@@ -16,6 +16,7 @@ defmodule MinaWeb.ChannelCase do
   """
 
   use ExUnit.CaseTemplate
+  alias Ecto.Adapters.SQL
 
   using do
     quote do
@@ -29,10 +30,10 @@ defmodule MinaWeb.ChannelCase do
   end
 
   setup tags do
-    :ok = Ecto.Adapters.SQL.Sandbox.checkout(Mina.Repo)
+    :ok = SQL.Sandbox.checkout(Mina.Repo)
 
     unless tags[:async] do
-      Ecto.Adapters.SQL.Sandbox.mode(Mina.Repo, {:shared, self()})
+      SQL.Sandbox.mode(Mina.Repo, {:shared, self()})
     end
 
     :ok

@@ -3,13 +3,13 @@ defmodule Mina.MinaHelpers do
   Provides helpers for working with the Mina application.
   """
 
-  alias Mina.{Partition, ClusterHelpers}
+  alias Mina.{ClusterHelpers, Partition}
 
   @doc """
   Reset the cluster membership back to initial state.
   """
   @spec reset_cluster_state() :: :ok
-  def reset_cluster_state() do
+  def reset_cluster_state do
     # Reset cluster membership
     :ok = Horde.Cluster.set_members(Partition.Supervisor, [])
     :ok = Horde.Cluster.set_members(Partition.Registry, [])
@@ -22,7 +22,7 @@ defmodule Mina.MinaHelpers do
   Reset the application back to initial state.
   """
   @spec reset_state() :: :ok
-  def reset_state() do
+  def reset_state do
     # Reset Supervisor and Registry state
     :ok = Partition.Supervisor.stop()
     :ok = Partition.Registry.stop()

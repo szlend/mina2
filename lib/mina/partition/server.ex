@@ -4,11 +4,11 @@ defmodule Mina.Partition.Server do
   """
 
   use GenServer
-  alias Mina.{Board, Partition}
+  alias Mina.{Partition, World}
 
   @type start_opt ::
-          {:spec, Partition.Spec.t()}
-          | {:position, Board.position()}
+          {:world, World.t()}
+          | {:position, World.position()}
           | {:name, GenServer.name()}
 
   @type via :: {:via, Partition.Registry, Partition.id()}
@@ -20,8 +20,8 @@ defmodule Mina.Partition.Server do
 
   The accepted options are:
 
-  * `:spec` - the `Mina.Partition.Spec` to base the server partition on.
-  * `:position` - the partition position on the board.
+  * `:world` - the `Mina.World` to base the server partition on.
+  * `:position` - the partition position on the world.
   * `:name` - the name of the server process.
   """
   @spec start_link([start_opt]) :: {:ok, pid} | {:error, any}
@@ -40,27 +40,27 @@ defmodule Mina.Partition.Server do
   end
 
   @doc """
-  Get the server via-tuple for a given partition `spec` and `position`.
+  Get the server via-tuple for a given `world` and `position`.
   """
-  @spec via_position(Partition.Spec.t(), Board.position()) :: via
-  def via_position(spec, position) do
-    {:via, Partition.Registry, Partition.id_at(spec, position)}
+  @spec via_position(World.t(), World.position()) :: via
+  def via_position(world, position) do
+    {:via, Partition.Registry, Partition.id_at(world, position)}
   end
 
   @doc """
   Reveals tiles on a Partition `server` at `positions`. Returns a map of new `reveals`.
   """
-  @spec reveal(GenServer.server(), [Board.position()]) ::
-          {Board.reveals(), %{Partition.id() => [Board.position()]}}
+  @spec reveal(GenServer.server(), [World.position()]) ::
+          {World.reveals(), %{Partition.id() => [World.position()]}}
   def reveal(server, positions) do
     GenServer.call(server, {:reveal, positions})
   end
 
   @impl true
   def init(opts) do
-    spec = Keyword.fetch!(opts, :spec)
+    world = Keyword.fetch!(opts, :world)
     position = Keyword.fetch!(opts, :position)
-    partition = Partition.build(spec, position)
+    partition = Partition.build(world, position)
 
     {:ok, partition}
   end

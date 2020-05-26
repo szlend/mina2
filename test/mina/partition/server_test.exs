@@ -1,6 +1,6 @@
 defmodule Mina.Partition.ServerTest do
   use Mina.DataCase, async: true
-  alias Mina.{Board, Partition}
+  alias Mina.{Partition, World}
 
   setup do
     #  -5   -4   -3   -2   -1    0    1    2    3    4    5
@@ -16,35 +16,32 @@ defmodule Mina.Partition.ServerTest do
     # ["1", "1", "2", "2", "2", "1", ".", "1", "x", "2", "3"], -4
     # ["1", "x", "2", "x", "2", "1", "1", "1", "2", "x", "3"]  -5
 
-    board = %Board{seed: "test", difficulty: 11}
-    spec = %Partition.Spec{board: board, size: 5}
-
-    [spec: spec]
+    [world: %World{seed: "test", difficulty: 11, partition_size: 5}]
   end
 
   describe "start_link/1" do
-    test "starts a server", %{spec: spec} do
-      assert {:ok, _server} = start_supervised({Partition.Server, spec: spec, position: {0, 0}})
+    test "starts a server", %{world: world} do
+      assert {:ok, _server} = start_supervised({Partition.Server, world: world, position: {0, 0}})
     end
 
-    test "starts a named server", %{spec: spec} do
+    test "starts a named server", %{world: world} do
       {:ok, server} =
-        start_supervised({Partition.Server, spec: spec, position: {0, 0}, name: __MODULE__})
+        start_supervised({Partition.Server, world: world, position: {0, 0}, name: __MODULE__})
 
       assert Keyword.get(Process.info(server), :registered_name) == __MODULE__
     end
   end
 
   describe "via_position/2" do
-    test "builds a via-tuple", %{spec: spec} do
-      assert Partition.Server.via_position(spec, {0, 0}) ==
+    test "builds a via-tuple", %{world: world} do
+      assert Partition.Server.via_position(world, {0, 0}) ==
                {:via, Partition.Registry, {{"test", 11, 5}, {0, 0}}}
     end
   end
 
   describe "reveal/2" do
-    setup %{spec: spec} do
-      {:ok, server} = start_supervised({Partition.Server, spec: spec, position: {0, 0}})
+    setup %{world: world} do
+      {:ok, server} = start_supervised({Partition.Server, world: world, position: {0, 0}})
       [server: server]
     end
 

@@ -1,42 +1,41 @@
 defmodule Mina.Partition do
   @moduledoc """
-  Provides functions for working with board Partitions.
+  Provides functions for working with world Partitions.
   """
 
   alias __MODULE__
-  alias Mina.Board
-  alias Mina.Partition.Spec
+  alias Mina.World
 
-  @type t :: %Partition{spec: Spec.t(), position: Board.position(), reveals: Board.reveals()}
-  @type id :: {Spec.id(), Board.position()}
+  @type t :: %Partition{world: World.t(), position: World.position(), reveals: World.reveals()}
+  @type id :: {World.id(), World.position()}
 
-  defstruct [:spec, :position, :reveals]
+  defstruct [:world, :position, :reveals]
 
   @doc """
-  Build a new partition from a partition `spec` at `position`. The position coordinates
-  have to be a multiple of the partition spec size.
+  Build a new partition on the `world` at `position`. The position coordinates
+  have to be a multiple of the world partition size.
   """
-  @spec build(Spec.t(), Board.position()) :: t
-  def build(%{size: size} = spec, {x, y} = position)
+  @spec build(World.t(), World.position()) :: t
+  def build(%{partition_size: size} = world, {x, y} = position)
       when rem(x, size) == 0 and rem(y, size) == 0 do
-    %Partition{spec: spec, position: position, reveals: %{}}
+    %Partition{world: world, position: position, reveals: %{}}
   end
 
   @doc """
-  Returns the position of the partition containing the board `position` with `spec`.
+  Returns the position of the partition containing the `position` on the `world`.
   """
-  @spec position(Spec.t(), Board.position()) :: Board.position()
-  def position(spec, {x, y} = _position) do
-    {x - Integer.mod(x, spec.size), y - Integer.mod(y, spec.size)}
+  @spec position(World.t(), World.position()) :: World.position()
+  def position(%{partition_size: size} = _world, {x, y} = _position) do
+    {x - Integer.mod(x, size), y - Integer.mod(y, size)}
   end
 
   @doc """
-  Return the id of a partition from a partition `spec` at `position`.
+  Return the id of a partition on the `world` at `position`.
   """
-  @spec id_at(Spec.t(), Board.position()) :: id
-  def id_at(%{size: size} = spec, {x, y} = position)
+  @spec id_at(World.t(), World.position()) :: id
+  def id_at(%{partition_size: size} = world, {x, y} = position)
       when rem(x, size) == 0 and rem(y, size) == 0 do
-    {Spec.id(spec), position}
+    {World.id(world), position}
   end
 
   @doc """
@@ -44,7 +43,7 @@ defmodule Mina.Partition do
   """
   @spec id(t) :: id
   def id(partition) do
-    {Spec.id(partition.spec), partition.position}
+    {World.id(partition.world), partition.position}
   end
 
   @doc """
@@ -52,14 +51,14 @@ defmodule Mina.Partition do
   `partition`, a map of new `reveals` and positions on bordering partitions that need to be
   revealed further.
   """
-  @spec reveal(t, Board.position()) :: {t, Board.reveals(), %{id => [Board.position()]}}
-  def reveal(%{spec: spec, reveals: reveals} = partition, position) do
+  @spec reveal(t, World.position()) :: {t, World.reveals(), %{id => [World.position()]}}
+  def reveal(%{world: world, reveals: reveals} = partition, position) do
     {internal_reveals, border_reveals} =
-      spec.board
+      world
       # reveal with bounds that include the neighbouring border
-      |> Board.reveal(position, reveals: reveals, bounds: extended_bounds(partition))
+      |> World.reveal(position, reveals: reveals, bounds: extended_bounds(partition))
       # group the reveals by partition position
-      |> Enum.group_by(fn {position, _} -> position(spec, position) end)
+      |> Enum.group_by(fn {position, _} -> position(world, position) end)
       # cast each partition's reveals into a map
       |> Enum.map(fn {position, reveals} -> {position, Map.new(reveals)} end)
       # split internal reveals and border reveals
@@ -73,7 +72,7 @@ defmodule Mina.Partition do
   end
 
   # The bounds of the partition, including the border
-  defp extended_bounds(%{spec: %{size: size}, position: {x, y}} = _partition) do
+  defp extended_bounds(%{world: %{partition_size: size}, position: {x, y}} = _partition) do
     {{x - 1, y - 1}, {x + size, y + size}}
   end
 end

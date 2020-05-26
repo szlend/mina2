@@ -7,7 +7,7 @@ defmodule Mina.ClusterHelpers do
   Starts the current node as a distributed node.
   """
   @spec start() :: {:ok, :undefined | pid} | {:ok, :undefined | pid, any} | {:error, any}
-  def start() do
+  def start do
     :net_kernel.start([:"manager@127.0.0.1"])
   end
 

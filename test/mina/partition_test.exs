@@ -1,6 +1,6 @@
 defmodule Mina.PartitionTest do
   use Mina.DataCase, async: true
-  alias Mina.{Board, Partition}
+  alias Mina.{Partition, World}
 
   setup do
     #  -5   -4   -3   -2   -1    0    1    2    3    4    5
@@ -16,76 +16,74 @@ defmodule Mina.PartitionTest do
     # ["1", "1", "2", "2", "2", "1", ".", "1", "x", "2", "3"], -4
     # ["1", "x", "2", "x", "2", "1", "1", "1", "2", "x", "3"]  -5
 
-    board = %Board{seed: "test", difficulty: 11}
-    spec = %Partition.Spec{board: board, size: 5}
-    partition = %Partition{spec: spec, position: {0, 0}, reveals: %{}}
-
-    [board: board, spec: spec, partition: partition]
+    world = %World{seed: "test", difficulty: 11, partition_size: 5}
+    partition = %Partition{world: world, position: {0, 0}, reveals: %{}}
+    [world: world, partition: partition]
   end
 
   describe "build/3" do
-    test "builds a new partition", %{spec: spec} do
-      assert Partition.build(spec, {0, 0}) == %Partition{
-               spec: spec,
+    test "builds a new partition", %{world: world} do
+      assert Partition.build(world, {0, 0}) == %Partition{
+               world: world,
                position: {0, 0},
                reveals: %{}
              }
     end
 
-    test "raises an error with invalid position", %{spec: spec} do
-      assert_raise FunctionClauseError, fn -> Partition.build(spec, {1, 1}) end
+    test "raises an error with invalid position", %{world: world} do
+      assert_raise FunctionClauseError, fn -> Partition.build(world, {1, 1}) end
     end
   end
 
   describe "position/2" do
-    test "returns the correct position - inside", %{spec: spec} do
-      assert Partition.position(spec, {1, 1}) == {0, 0}
+    test "returns the correct position - inside", %{world: world} do
+      assert Partition.position(world, {1, 1}) == {0, 0}
     end
 
-    test "returns the correct position - bottom-left", %{spec: spec} do
-      assert Partition.position(spec, {0, 0}) == {0, 0}
+    test "returns the correct position - bottom-left", %{world: world} do
+      assert Partition.position(world, {0, 0}) == {0, 0}
     end
 
-    test "returns the correct position - bottom-right position", %{spec: spec} do
-      assert Partition.position(spec, {0, 4}) == {0, 0}
+    test "returns the correct position - bottom-right position", %{world: world} do
+      assert Partition.position(world, {0, 4}) == {0, 0}
     end
 
-    test "returns the correct position - top-left", %{spec: spec} do
-      assert Partition.position(spec, {4, 0}) == {0, 0}
+    test "returns the correct position - top-left", %{world: world} do
+      assert Partition.position(world, {4, 0}) == {0, 0}
     end
 
-    test "returns the correct position - top-right", %{spec: spec} do
-      assert Partition.position(spec, {4, 4}) == {0, 0}
+    test "returns the correct position - top-right", %{world: world} do
+      assert Partition.position(world, {4, 4}) == {0, 0}
     end
 
-    test "returns the correct position - inside negative", %{spec: spec} do
-      assert Partition.position(spec, {-4, -4}) == {-5, -5}
+    test "returns the correct position - inside negative", %{world: world} do
+      assert Partition.position(world, {-4, -4}) == {-5, -5}
     end
 
-    test "returns the correct position - bottom-left negative", %{spec: spec} do
-      assert Partition.position(spec, {-5, -5}) == {-5, -5}
+    test "returns the correct position - bottom-left negative", %{world: world} do
+      assert Partition.position(world, {-5, -5}) == {-5, -5}
     end
 
-    test "returns the correct position - bottom-right negative", %{spec: spec} do
-      assert Partition.position(spec, {-1, -5}) == {-5, -5}
+    test "returns the correct position - bottom-right negative", %{world: world} do
+      assert Partition.position(world, {-1, -5}) == {-5, -5}
     end
 
-    test "returns the correct position - top-left negative", %{spec: spec} do
-      assert Partition.position(spec, {-5, -1}) == {-5, -5}
+    test "returns the correct position - top-left negative", %{world: world} do
+      assert Partition.position(world, {-5, -1}) == {-5, -5}
     end
 
-    test "returns the correct position - top-right negative", %{spec: spec} do
-      assert Partition.position(spec, {-1, -1}) == {-5, -5}
+    test "returns the correct position - top-right negative", %{world: world} do
+      assert Partition.position(world, {-1, -1}) == {-5, -5}
     end
   end
 
   describe "id_at/1" do
-    test "returns the correct partition id", %{spec: spec} do
-      assert Partition.id_at(spec, {0, 0}) == {{"test", 11, 5}, {0, 0}}
+    test "returns the correct partition id", %{world: world} do
+      assert Partition.id_at(world, {0, 0}) == {{"test", 11, 5}, {0, 0}}
     end
 
-    test "raises an error with invalid position", %{spec: spec} do
-      assert_raise FunctionClauseError, fn -> Partition.id_at(spec, {1, 1}) end
+    test "raises an error with invalid position", %{world: world} do
+      assert_raise FunctionClauseError, fn -> Partition.id_at(world, {1, 1}) end
     end
   end
 
@@ -96,11 +94,10 @@ defmodule Mina.PartitionTest do
   end
 
   describe "reveal/2" do
-    setup %{board: board} do
-      spec = %Partition.Spec{board: board, size: 4}
-      partition = %Partition{spec: spec, position: {-4, -4}, reveals: %{}}
-
-      [spec: spec, partition: partition]
+    setup do
+      world = %World{seed: "test", difficulty: 11, partition_size: 4}
+      partition = %Partition{world: world, position: {-4, -4}, reveals: %{}}
+      [world: world, partition: partition]
     end
 
     test "updates the partition with new reveals", %{partition: partition} do
@@ -140,8 +137,8 @@ defmodule Mina.PartitionTest do
              }
     end
 
-    test "returns border positions - top-left", %{spec: spec} do
-      partition = %Partition{spec: spec, position: {-4, -4}, reveals: %{}}
+    test "returns border positions - top-left", %{world: world} do
+      partition = %Partition{world: world, position: {-4, -4}, reveals: %{}}
       {_, _, border_positions} = Partition.reveal(partition, {-4, -1})
 
       assert border_positions == %{
@@ -151,8 +148,8 @@ defmodule Mina.PartitionTest do
              }
     end
 
-    test "returns border positions - top-right", %{spec: spec} do
-      partition = %Partition{spec: spec, position: {0, 0}, reveals: %{}}
+    test "returns border positions - top-right", %{world: world} do
+      partition = %Partition{world: world, position: {0, 0}, reveals: %{}}
       {_, _, border_positions} = Partition.reveal(partition, {3, 3})
 
       assert border_positions == %{

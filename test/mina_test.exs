@@ -1,7 +1,7 @@
 defmodule MinaTest do
   use Mina.DataCase, async: false
 
-  alias Mina.{Board, Partition}
+  alias Mina.{Partition, World}
 
   setup do
     #  -5   -4   -3   -2   -1    0    1    2    3    4    5
@@ -18,20 +18,16 @@ defmodule MinaTest do
     # ["1", "x", "2", "x", "2", "1", "1", "1", "2", "x", "3"]  -5
 
     on_exit(&reset_state/0)
-
-    board = %Board{seed: "test", difficulty: 11}
-    spec = %Partition.Spec{board: board, size: 3}
-
-    [board: board, spec: spec]
+    [world: %World{seed: "test", difficulty: 11, partition_size: 3}]
   end
 
   describe "reveal_tile/3" do
-    test "reveals tiles", %{spec: spec} do
-      assert Mina.reveal_tile(spec, {0, 0}) == %{{0, 0} => {:proximity, 2}}
+    test "reveals tiles", %{world: world} do
+      assert Mina.reveal_tile(world, {0, 0}) == %{{0, 0} => {:proximity, 2}}
     end
 
-    test "reveals tiles across partitions", %{spec: spec} do
-      assert Mina.reveal_tile(spec, {1, -2}) == %{
+    test "reveals tiles across partitions", %{world: world} do
+      assert Mina.reveal_tile(world, {1, -2}) == %{
                {0, -5} => {:proximity, 1},
                {0, -4} => {:proximity, 1},
                {0, -3} => {:proximity, 1},
@@ -50,8 +46,8 @@ defmodule MinaTest do
              }
     end
 
-    test "reveals tiles across partitions with depth limit", %{spec: spec} do
-      assert Mina.reveal_tile(spec, {1, -2}, 1) == %{
+    test "reveals tiles across partitions with depth limit", %{world: world} do
+      assert Mina.reveal_tile(world, {1, -2}, 1) == %{
                {0, -3} => {:proximity, 1},
                {0, -2} => {:proximity, 1},
                {0, -1} => {:proximity, 1},
@@ -64,7 +60,7 @@ defmodule MinaTest do
              }
     end
 
-    test "concurrently reveals expected results", %{board: board, spec: spec} do
+    test "concurrently reveals expected results", %{world: world} do
       bounds = {{bot_x, bot_y}, {top_x, top_y}} = {{-12, -12}, {11, 11}}
       positions = for x <- bot_x..top_x, y <- bot_y..top_y, do: {x, y}
 
@@ -72,7 +68,7 @@ defmodule MinaTest do
       positions
       |> Enum.shuffle()
       |> Task.async_stream(
-        fn position -> Mina.reveal_tile(spec, position) end,
+        fn position -> Mina.reveal_tile(world, position) end,
         max_concurrency: 128,
         ordered: false
       )
@@ -81,24 +77,24 @@ defmodule MinaTest do
       # get all the reveals from partitions
       partitioned_reveals =
         positions
-        |> Enum.map(fn position -> Partition.position(spec, position) end)
+        |> Enum.map(fn position -> Partition.position(world, position) end)
         |> Enum.uniq()
         |> Enum.reduce(%{}, fn position, reveals ->
-          {:ok, pid} = Partition.Supervisor.ensure_partition(spec, position)
+          {:ok, pid} = Partition.Supervisor.ensure_partition(world, position)
           partition = :sys.get_state(pid)
           Map.merge(reveals, partition.reveals)
         end)
 
       # simulate the reveals without partitions
-      board_reveals =
+      world_reveals =
         Enum.reduce(positions, %{}, fn position, reveals ->
-          new_reveals = Board.reveal(board, position, bounds: bounds, reveals: reveals)
+          new_reveals = World.reveal(world, position, bounds: bounds, reveals: reveals)
           Map.merge(reveals, new_reveals)
         end)
 
-      # partitioned reveals should match board reveals
-      assert Enum.count(partitioned_reveals) == Enum.count(board_reveals)
-      assert partitioned_reveals == board_reveals
+      # partitioned reveals should match world reveals
+      assert Enum.count(partitioned_reveals) == Enum.count(world_reveals)
+      assert partitioned_reveals == world_reveals
     end
   end
 end

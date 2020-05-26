@@ -4,7 +4,7 @@ defmodule Mina.Partition.Supervisor do
   """
 
   use Horde.DynamicSupervisor
-  alias Mina.{Board, Partition}
+  alias Mina.{Partition, World}
 
   @type start_opt :: {:name, Supervisor.name()}
 
@@ -27,12 +27,12 @@ defmodule Mina.Partition.Supervisor do
   @doc """
   Start a partition server under a `supervisor`.
   """
-  @spec start_partition(Supervisor.supervisor(), Partition.Spec.t(), Board.position()) ::
+  @spec start_partition(Supervisor.supervisor(), World.t(), World.position()) ::
           {:ok, pid} | {:error, any}
-  def start_partition(supervisor \\ __MODULE__, spec, position) do
-    id = Partition.id_at(spec, position)
-    name = Partition.Server.via_position(spec, position)
-    child_spec = {Partition.Server, spec: spec, position: position, id: id, name: name}
+  def start_partition(supervisor \\ __MODULE__, world, position) do
+    id = Partition.id_at(world, position)
+    name = Partition.Server.via_position(world, position)
+    child_spec = {Partition.Server, world: world, position: position, id: id, name: name}
     Horde.DynamicSupervisor.start_child(supervisor, child_spec)
   end
 
@@ -40,10 +40,10 @@ defmodule Mina.Partition.Supervisor do
   Ensure a partition server is running under a `supervisor`. This will start a new server
   if one is not yet running.
   """
-  @spec ensure_partition(Supervisor.supervisor(), Partition.Spec.t(), Board.position()) ::
+  @spec ensure_partition(Supervisor.supervisor(), World.t(), World.position()) ::
           {:ok, pid} | {:error, any}
-  def ensure_partition(supervisor \\ __MODULE__, spec, position) do
-    with {:error, {:already_started, pid}} <- start_partition(supervisor, spec, position) do
+  def ensure_partition(supervisor \\ __MODULE__, world, position) do
+    with {:error, {:already_started, pid}} <- start_partition(supervisor, world, position) do
       {:ok, pid}
     end
   end
