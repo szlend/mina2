@@ -17,5 +17,9 @@ config :mina, MinaWeb.Endpoint,
   http: [port: 4002],
   server: false
 
+# Increase the number of restarts to prevent the application
+# from shutting down between tests
+config :mina, :supervisor_opts, max_restarts: 10_000
+
 # Print only warnings and errors during test
 config :logger, level: :warn

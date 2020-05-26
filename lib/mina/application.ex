@@ -26,7 +26,8 @@ defmodule Mina.Application do
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options
     opts = [strategy: :one_for_one, name: Mina.Supervisor]
-    Supervisor.start_link(children, opts)
+    extra_opts = Application.get_env(:mina, :supervisor_opts, [])
+    Supervisor.start_link(children, Keyword.merge(opts, extra_opts))
   end
 
   # Tell Phoenix to update the endpoint configuration
