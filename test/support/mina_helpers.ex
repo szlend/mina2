@@ -3,7 +3,20 @@ defmodule Mina.MinaHelpers do
   Provides helpers for working with the Mina application.
   """
 
-  alias Mina.Partition
+  alias Mina.{Partition, ClusterHelpers}
+
+  @doc """
+  Reset the cluster membership back to initial state.
+  """
+  @spec reset_cluster_state() :: :ok
+  def reset_cluster_state() do
+    # Reset cluster membership
+    :ok = Horde.Cluster.set_members(Partition.Supervisor, [])
+    :ok = Horde.Cluster.set_members(Partition.Registry, [])
+
+    # Stop nodes manually to prevent NodeListener errors between tests
+    ClusterHelpers.stop_nodes(Node.list() -- [Node.self()])
+  end
 
   @doc """
   Reset the application back to initial state.
