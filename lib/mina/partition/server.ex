@@ -31,6 +31,15 @@ defmodule Mina.Partition.Server do
   end
 
   @doc """
+  Returns a supervisor child spec for the partition server.
+  """
+  @spec child_spec(Keyword.t()) :: Supervisor.child_spec()
+  def child_spec(opts) do
+    {id, opts} = Keyword.pop(opts, :id, __MODULE__)
+    %{id: id, restart: :transient, start: {__MODULE__, :start_link, [opts]}}
+  end
+
+  @doc """
   Get the server via-tuple for a given partition `spec` and `position`.
   """
   @spec via_position(Partition.Spec.t(), Board.position()) :: via
@@ -45,11 +54,6 @@ defmodule Mina.Partition.Server do
           {Board.reveals(), %{Partition.id() => [Board.position()]}}
   def reveal(server, positions) do
     GenServer.call(server, {:reveal, positions})
-  end
-
-  def child_spec(opts) do
-    {id, opts} = Keyword.pop(opts, :id, __MODULE__)
-    %{id: id, restart: :transient, start: {__MODULE__, :start_link, [opts]}}
   end
 
   @impl true

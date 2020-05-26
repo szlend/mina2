@@ -10,7 +10,7 @@ defmodule Mina.Application do
       # Start the Partition registry
       Mina.Partition.Registry,
       # Start the Partition supervisor
-      {Mina.Partition.Supervisor, name: Mina.Partition.Supervisor},
+      Mina.Partition.Supervisor,
       # Start the Ecto repository
       Mina.Repo,
       # Start the Telemetry supervisor

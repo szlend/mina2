@@ -1,6 +1,6 @@
 defmodule Mina.Partition.Supervisor do
   @moduledoc """
-  The dynamic supervisor for `Mina.Partition.Server`.
+  A distributed dynamic supervisor for `Mina.Partition.Server`.
   """
 
   use Horde.DynamicSupervisor
@@ -19,7 +19,8 @@ defmodule Mina.Partition.Supervisor do
   """
   @spec start_link([start_opt]) :: {:ok, pid} | {:error, any}
   def start_link(opts \\ []) do
-    {name, opts} = Keyword.pop!(opts, :name)
+    {name, opts} = Keyword.pop(opts, :name, __MODULE__)
+    opts = Keyword.merge([strategy: :one_for_one, members: :auto], opts)
     Horde.DynamicSupervisor.start_link(__MODULE__, opts, name: name)
   end
 
@@ -66,8 +67,15 @@ defmodule Mina.Partition.Supervisor do
     |> Enum.map(fn {:undefined, pid, _type, _modules} -> pid end)
   end
 
+  @doc """
+  Stops the `supervisor` with `reason` and `timeout`.
+  """
+  def stop(supervisor \\ __MODULE__, reason \\ :normal, timeout \\ 5000) do
+    Horde.DynamicSupervisor.stop(supervisor, reason, timeout)
+  end
+
   @impl true
-  def init(_opts) do
-    Horde.DynamicSupervisor.init(strategy: :one_for_one)
+  def init(opts) do
+    Horde.DynamicSupervisor.init(opts)
   end
 end
