@@ -8,7 +8,7 @@ defmodule Mina.Application do
   def start(_type, _args) do
     children = [
       # Start the Partition registry
-      {Horde.Registry, keys: :unique, name: Mina.Partition.Registry},
+      Mina.Partition.Registry,
       # Start the Partition supervisor
       {Mina.Partition.Supervisor, name: Mina.Partition.Supervisor},
       # Start the Ecto repository

@@ -11,7 +11,7 @@ defmodule Mina.Partition.Server do
           | {:position, Board.position()}
           | {:name, GenServer.name()}
 
-  @type via :: {:via, Horde.Registry, {Partition.Registry, Partition.id()}}
+  @type via :: {:via, Partition.Registry, Partition.id()}
 
   @doc """
   Starts a new `Partition.Server` with the given `opts`.
@@ -35,7 +35,7 @@ defmodule Mina.Partition.Server do
   """
   @spec via_position(Partition.Spec.t(), Board.position()) :: via
   def via_position(spec, position) do
-    {:via, Horde.Registry, {Partition.Registry, Partition.id_at(spec, position)}}
+    {:via, Partition.Registry, Partition.id_at(spec, position)}
   end
 
   @doc """
