@@ -9,7 +9,8 @@ config :mina, Mina.Repo,
   username: "postgres",
   database: "mina_test#{System.get_env("MIX_TEST_PARTITION")}",
   hostname: "postgres",
-  pool: Ecto.Adapters.SQL.Sandbox
+  pool: Ecto.Adapters.SQL.Sandbox,
+  pool_size: 5
 
 # We don't run a server during test. If one is required,
 # you can enable the server option below.
