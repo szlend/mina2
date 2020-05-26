@@ -23,7 +23,7 @@ defmodule Mina.Partition.Registry do
   @doc """
   Stops the `registry` supervisor with `reason` and `timeout`.
   """
-  @spec stop(Supervisor.supervisor(), any, non_neg_integer) :: :ok
+  @spec stop(Supervisor.supervisor(), any, :infinity | non_neg_integer) :: :ok
   def stop(registry \\ __MODULE__, reason \\ :normal, timeout \\ 5000) do
     Horde.Registry.stop(registry, reason, timeout)
   end

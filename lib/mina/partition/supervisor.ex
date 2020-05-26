@@ -70,6 +70,7 @@ defmodule Mina.Partition.Supervisor do
   @doc """
   Stops the `supervisor` with `reason` and `timeout`.
   """
+  @spec stop(Supervisor.supervisor(), any, :infinity | non_neg_integer) :: :ok
   def stop(supervisor \\ __MODULE__, reason \\ :normal, timeout \\ 5000) do
     Horde.DynamicSupervisor.stop(supervisor, reason, timeout)
   end
