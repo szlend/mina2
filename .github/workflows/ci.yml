@@ -39,4 +39,4 @@ jobs:
         run: docker-compose run mina mix credo 2> /dev/null
 
       - name: Run tests
-        run: docker-compose run mina mix test 2> /dev/null
+        run: docker-compose run mina mix test --trace 2> /dev/null
