@@ -17,6 +17,7 @@ defmodule MinaWeb.Router do
   scope "/", MinaWeb do
     pipe_through :browser
 
+    live "/game/:name", GameLive
     live "/", PageLive, :index
   end
 
