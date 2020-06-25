@@ -118,15 +118,7 @@ defmodule MinaWeb.GameLive do
   defp tile_at(world, position) do
     case Mina.World.reveal_at(world, position) do
       {:mine, _} -> ?m
-      {{:proximity, 0}, _} -> ?0
-      {{:proximity, 1}, _} -> ?1
-      {{:proximity, 2}, _} -> ?2
-      {{:proximity, 3}, _} -> ?3
-      {{:proximity, 4}, _} -> ?4
-      {{:proximity, 5}, _} -> ?5
-      {{:proximity, 6}, _} -> ?6
-      {{:proximity, 7}, _} -> ?7
-      {{:proximity, 8}, _} -> ?8
+      {{:proximity, n}, _} -> ?0 + n
     end
   end
 end
