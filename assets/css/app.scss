@@ -1,6 +1,21 @@
 /* This file is for your main application css. */
-@import "./phoenix.css";
 @import "../node_modules/nprogress/nprogress.css";
+
+html, body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+
+#game {
+  width: 100%;
+  height: 100%;
+}
+
+#game canvas {
+  display: block;
+}
 
 /* LiveView specific classes for your customizations */
 .invalid-feedback {

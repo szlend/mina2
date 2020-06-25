@@ -13,12 +13,13 @@ import "../css/app.scss"
 //     import socket from "./socket"
 //
 import "phoenix_html"
-import {Socket} from "phoenix"
-import NProgress from "nprogress"
-import {LiveSocket} from "phoenix_live_view"
+import { Socket } from "phoenix"
+import NProgress, { render } from "nprogress"
+import { LiveSocket } from "phoenix_live_view"
+import Game from "./game.js"
 
 let csrfToken = document.querySelector("meta[name='csrf-token']").getAttribute("content")
-let liveSocket = new LiveSocket("/live", Socket, {params: {_csrf_token: csrfToken}})
+let liveSocket = new LiveSocket("/live", Socket, { hooks: { Game }, params: { _csrf_token: csrfToken } })
 
 // Show progress bar on live navigation and form submits
 window.addEventListener("phx:page-loading-start", info => NProgress.start())

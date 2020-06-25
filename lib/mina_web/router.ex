@@ -17,7 +17,7 @@ defmodule MinaWeb.Router do
   scope "/", MinaWeb do
     pipe_through :browser
 
-    live "/", PageLive, :index
+    live "/", GameLive
   end
 
   # Other scopes may use custom stacks.
