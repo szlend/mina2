@@ -56,6 +56,14 @@ defmodule Mina.Partition.Server do
     GenServer.call(server, {:reveal, positions})
   end
 
+  @doc """
+  Encode the `partition` with the given `serializer` implementing `Mina.Partition.Serializer`.
+  """
+  @spec encode(GenServer.server(), atom) :: {:ok, term} | {:error, term}
+  def encode(server, serializer) do
+    GenServer.call(server, {:encode, serializer})
+  end
+
   @impl true
   def init(opts) do
     world = Keyword.fetch!(opts, :world)
@@ -69,6 +77,10 @@ defmodule Mina.Partition.Server do
   def handle_call({:reveal, positions}, _from, partition) do
     {partition, reveals, border_positions} = reveal_positions(positions, partition, %{}, %{})
     {:reply, {reveals, border_positions}, partition}
+  end
+
+  def handle_call({:encode, serializer}, _from, partition) do
+    {:reply, Partition.encode(serializer, partition), partition}
   end
 
   defp reveal_positions([], partition, reveals, border_positions) do

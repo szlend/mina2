@@ -1,6 +1,7 @@
 defmodule Mina.Partition.ServerTest do
   use Mina.DataCase, async: true
   alias Mina.{Partition, World}
+  alias Mina.Partition.MockSerializer
 
   setup do
     #  -5   -4   -3   -2   -1    0    1    2    3    4    5
@@ -71,6 +72,17 @@ defmodule Mina.Partition.ServerTest do
                {0, 0} => {:proximity, 2},
                {1, 0} => :mine
              }
+    end
+  end
+
+  describe "encode/2" do
+    setup %{world: world} do
+      {:ok, server} = start_supervised({Partition.Server, world: world, position: {0, 0}})
+      [server: server]
+    end
+
+    test "it delegates encoding to the serializer", %{server: server} do
+      assert Partition.Server.encode(server, MockSerializer) == {:ok, "mock"}
     end
   end
 end

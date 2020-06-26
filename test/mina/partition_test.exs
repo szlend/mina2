@@ -1,6 +1,7 @@
 defmodule Mina.PartitionTest do
   use Mina.DataCase, async: true
   alias Mina.{Partition, World}
+  alias Mina.Partition.MockSerializer
 
   setup do
     #  -5   -4   -3   -2   -1    0    1    2    3    4    5
@@ -157,6 +158,18 @@ defmodule Mina.PartitionTest do
                {4, 0} => [{4, 0}, {4, 1}, {4, 2}, {4, 3}],
                {4, 4} => [{4, 4}]
              }
+    end
+  end
+
+  describe "encode/2" do
+    test "it delegates encoding to the serializer", %{partition: partition} do
+      assert Partition.encode(MockSerializer, partition) == {:ok, "mock"}
+    end
+  end
+
+  describe "decode/3" do
+    test "it delegates decoding to the serializer", %{partition: partition} do
+      assert Partition.decode(MockSerializer, partition, "") == {:ok, partition}
     end
   end
 end

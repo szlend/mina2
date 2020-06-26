@@ -71,6 +71,22 @@ defmodule Mina.Partition do
     {partition, reveals, border_positions}
   end
 
+  @doc """
+  Encode the `partition` with the given `serializer` implementing `Mina.Partition.Serializer`.
+  """
+  @spec encode(atom, t) :: {:ok, term} | {:error, term}
+  def encode(serializer, partition) do
+    serializer.encode(partition)
+  end
+
+  @doc """
+  Decode `data` into `partition` with the given `serializer` implementing `Mina.Partition.Serializer`.
+  """
+  @spec decode(atom, t, term) :: {:ok, term} | {:error, term}
+  def decode(serializer, partition, data) do
+    serializer.decode(partition, data)
+  end
+
   # The bounds of the partition, including the border
   defp extended_bounds(%{world: %{partition_size: size}, position: {x, y}} = _partition) do
     {{x - 1, y - 1}, {x + size, y + size}}
