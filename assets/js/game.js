@@ -41,8 +41,8 @@ export default {
       })
 
       this.canvas.addEventListener("touchstart", (e) => {
-        this.clientX = e.touches[0].clientX
-        this.clientY = e.touches[0].clientY
+        this.touchX = e.touches[0].clientX
+        this.touchY = e.touches[0].clientY
       })
 
       this.canvas.addEventListener("touchmove", (e) => {
@@ -74,7 +74,7 @@ export default {
     this.handleActions()
 
     // send camera updates
-    if (Math.abs(Number(this.x - this.lastX)) >= this.tileSize * 4 || Math.abs(Number(this.y - this.lastY)) >= 128) {
+    if (Math.abs(Number(this.x - this.lastX)) >= this.tileSize * 4 || Math.abs(Number(this.y - this.lastY)) >= this.tileSize * 4) {
       this.pushEvent("camera", { x: this.x.toString(), y: this.y.toString() })
       this.lastX = this.x
       this.lastY = this.y
@@ -101,9 +101,13 @@ export default {
 
   handleActions() {
     for (let [type, x, y, items] of this.actions) {
+      console.log([type, x, y, items])
       switch (type) {
         case "a":
           this.addContainer(BigInt(x), BigInt(y), items)
+          break
+        case "u":
+          this.updateContainer(BigInt(x), BigInt(y), items)
           break
         case "r":
           this.removeContainer(BigInt(x), BigInt(y))
@@ -130,6 +134,22 @@ export default {
     container.cacheAsBitmap = true
   },
 
+  updateContainer(partitionX, partitionY, items) {
+    const container = this.app.stage.children.find(c =>
+      c.visible &&
+      c.partition &&
+      c.partition.x === partitionX &&
+      c.partition.y === partitionY
+    )
+
+    container.cacheAsBitmap = false
+
+    for (let [x, y, t] of items) {
+      const idx = y * this.partitionSize + x
+      container.children[idx].texture = this.tileset[t]
+    }
+  },
+
   removeContainer(partitionX, partitionY) {
     const container = this.app.stage.children.find(c =>
       c.visible &&
@@ -153,7 +173,9 @@ export default {
         const position = e.data.getLocalPosition(container)
         const offsetX = Math.floor(position.x / this.tileSize)
         const offsetY = Math.floor(position.y / this.tileSize)
-        console.log(container.partition.x + BigInt(offsetX), container.partition.y + BigInt(offsetY))
+        const tileX = container.partition.x + BigInt(offsetX)
+        const tileY = container.partition.y + BigInt(offsetY)
+        this.pushEvent("reveal", { x: tileX.toString(), y: tileY.toString() })
       }
     })
 

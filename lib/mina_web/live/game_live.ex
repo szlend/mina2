@@ -4,6 +4,7 @@ defmodule MinaWeb.GameLive do
   """
 
   use MinaWeb, :live_view
+  alias Mina.Partition.TileSerializer
 
   @tileset %{
     "u" => [0, 0],
@@ -60,6 +61,22 @@ defmodule MinaWeb.GameLive do
   end
 
   @impl true
+  def handle_event("reveal", %{"x" => x, "y" => y}, socket) do
+    x = String.to_integer(x)
+    y = String.to_integer(y)
+
+    partitions = Mina.reveal_tile_partitioned(socket.assigns.world, {x, y})
+
+    actions =
+      for {{px, py}, reveals} <- partitions do
+        data = for {{x, y}, tile} <- reveals, do: [x - px, y - py, to_string([encode_tile(tile)])]
+        ["u", to_string(px), to_string(py), data]
+      end
+
+    {:noreply, assign(socket, actions: actions)}
+  end
+
+  @impl true
   def render(assigns) do
     ~L"""
     <div
@@ -101,24 +118,16 @@ defmodule MinaWeb.GameLive do
     removed = MapSet.difference(prev_partitions, partitions)
 
     r = for {x, y} <- removed, do: ["r", to_string(x), to_string(y), nil]
-    a = for {x, y} <- added, do: ["a", to_string(x), to_string(y), gen_tiles(socket, x, y)]
+    a = for {x, y} <- added, do: ["a", to_string(x), to_string(y), load_tiles(socket, x, y)]
 
     r ++ a
   end
 
-  defp gen_tiles(socket, px, py) do
-    world = socket.assigns.world
-
-    for y <- py..(py + world.partition_size - 1), x <- px..(px + world.partition_size - 1) do
-      tile_at(world, {x, y})
-    end
-    |> to_string()
+  defp load_tiles(socket, px, py) do
+    {:ok, data} = Mina.encode_partition(socket.assigns.world, {px, py}, TileSerializer)
+    data
   end
 
-  defp tile_at(world, position) do
-    case Mina.World.reveal_at(world, position) do
-      {:mine, _} -> ?m
-      {{:proximity, n}, _} -> ?0 + n
-    end
-  end
+  defp encode_tile(:mine), do: ?m
+  defp encode_tile({:proximity, n}), do: ?0 + n
 end

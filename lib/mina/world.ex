@@ -19,6 +19,7 @@ defmodule Mina.World do
   @type tile :: :mine | {:proximity, 0..8}
   @type bounds :: {position, position}
   @type reveals :: %{position => tile}
+  @type partitioned_reveals :: %{position => reveals}
 
   @type build_opt :: {:partition_size, pos_integer}
   @type reveal_opt :: {:bounds, :infinity | bounds} | {:reveals, reveals}
