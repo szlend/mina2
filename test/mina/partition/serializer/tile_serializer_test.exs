@@ -5,17 +5,17 @@ defmodule Mina.Partition.TileSerializerTest do
 
   setup do
     reveals = %{
-      {0, 0} => {:proximity, 2},
-      {1, 0} => :mine,
-      {1, 1} => {:proximity, 1},
-      {2, 1} => {:proximity, 2},
-      {3, 1} => :mine,
-      {0, 3} => {:proximity, 1},
-      {1, 3} => {:proximity, 0}
+      {-4, 4} => {:proximity, 2},
+      {-3, 4} => :mine,
+      {-3, 5} => {:proximity, 1},
+      {-2, 5} => {:proximity, 2},
+      {-1, 5} => :mine,
+      {-4, 7} => {:proximity, 1},
+      {-3, 7} => {:proximity, 0}
     }
 
     world = %World{seed: "test", difficulty: 11, partition_size: 4}
-    partition = %Partition{world: world, position: {0, 0}, reveals: %{}}
+    partition = %Partition{world: world, position: {-4, 4}, reveals: %{}}
     [world: world, partition: partition, reveals: reveals]
   end
 

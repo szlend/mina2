@@ -15,7 +15,13 @@ defmodule Mina.Partition.TileSerializer do
   def encode(partition) do
     size = partition.world.partition_size
     reveals = partition.reveals
-    data = for y <- 0..(size - 1), x <- 0..(size - 1), do: encode_tile(reveals[{x, y}])
+    {from_x, from_y} = partition.position
+
+    data =
+      for y <- 0..(size - 1),
+          x <- 0..(size - 1),
+          do: encode_tile(reveals[{from_x + x, from_y + y}])
+
     {:ok, to_string(data)}
   end
 
@@ -25,7 +31,10 @@ defmodule Mina.Partition.TileSerializer do
   @impl true
   @spec decode(Partition.t(), String.t()) :: {:ok, Partition.t()} | {:error, term}
   def decode(partition, data) do
+    {from_x, from_y} = partition.position
+
     with {:ok, reveals} <- do_decode(data, 0, 0, partition.world.partition_size) do
+      reveals = for {{x, y}, tile} <- reveals, do: {{from_x + x, from_y + y}, tile}
       {:ok, %{partition | reveals: Map.new(reveals)}}
     end
   end
