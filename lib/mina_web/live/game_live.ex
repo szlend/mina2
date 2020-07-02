@@ -43,7 +43,12 @@ defmodule MinaWeb.GameLive do
 
   @impl true
   def handle_event("resize", %{"width" => width, "height" => height}, socket) do
-    {:noreply, assign(socket, width: trunc(width), height: trunc(height))}
+    x = socket.assigns.x
+    y = socket.assigns.y
+    partitions = partitions_in_viewport(socket, x, y, width, height)
+    actions = actions(socket, partitions, socket.assigns.partitions)
+
+    {:noreply, assign(socket, width: trunc(width), height: trunc(height), actions: actions)}
   end
 
   @impl true
