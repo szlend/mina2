@@ -1,4 +1,5 @@
 import * as PIXI from "pixi.js"
+import bigInt from "big-integer"
 
 export default {
   mounted() {
@@ -17,16 +18,16 @@ export default {
       this.bg.scale.y = this.tileScale
       this.app.stage.addChild(this.bg)
 
-      this.x = BigInt(0)
-      this.y = BigInt(0)
+      this.x = bigInt(0)
+      this.y = bigInt(0)
       this.width = 0
       this.height = 0
       this.actions = []
       this.containerPool = []
 
       this.input = {
-        updateX: BigInt(0),
-        updateY: BigInt(0),
+        updateX: bigInt(0),
+        updateY: bigInt(0),
         clientX: 0,
         clientY: 0,
         startClientX: 0,
@@ -73,8 +74,8 @@ export default {
     }
 
     // update background position
-    this.bg.x = -Number(this.x % BigInt(this.tileSize)) - (Math.round(this.width / this.tileSize / 2) + 1) * this.tileSize
-    this.bg.y = -Number(this.y % BigInt(this.tileSize)) - (Math.round(this.height / this.tileSize / 2) + 1) * this.tileSize
+    this.bg.x = -this.x.mod(bigInt(this.tileSize)).toJSNumber() - (Math.round(this.width / this.tileSize / 2) + 1) * this.tileSize
+    this.bg.y = -this.y.mod(bigInt(this.tileSize)).toJSNumber() - (Math.round(this.height / this.tileSize / 2) + 1) * this.tileSize
     this.bg.width = (this.width + this.tileSize * 2) / this.tileScale
     this.bg.height = (this.height + this.tileSize * 2) / this.tileScale
 
@@ -84,8 +85,8 @@ export default {
     // update container positions
     for (let container of this.app.stage.children) {
       if (container.partition) {
-        container.x = Number(container.partition.x * BigInt(this.tileSize) - this.x)
-        container.y = Number(container.partition.y * BigInt(this.tileSize) - this.y)
+        container.x = container.partition.x.times(bigInt(this.tileSize)).minus(this.x).toJSNumber()
+        container.y = container.partition.y.times(bigInt(this.tileSize)).minus(this.y).toJSNumber()
       }
     }
   },
@@ -94,13 +95,13 @@ export default {
     for (let [type, x, y, items] of this.actions) {
       switch (type) {
         case "a":
-          this.takeContainer(BigInt(x), BigInt(y), items)
+          this.takeContainer(bigInt(x), bigInt(y), items)
           break
         case "u":
-          this.updateContainer(BigInt(x), BigInt(y), items)
+          this.updateContainer(bigInt(x), bigInt(y), items)
           break
         case "r":
-          this.releaseContainer(BigInt(x), BigInt(y))
+          this.releaseContainer(bigInt(x), bigInt(y))
           break
       }
     }
@@ -148,8 +149,8 @@ export default {
     return this.app.stage.children.find(c =>
       c.visible &&
       c.partition &&
-      c.partition.x === partitionX &&
-      c.partition.y === partitionY
+      c.partition.x.equals(partitionX) &&
+      c.partition.y.equals(partitionY)
     )
   },
 
@@ -192,14 +193,14 @@ export default {
   pointerMoved(clientX, clientY, force) {
     if (this.input.moving) {
       // Update client camera position
-      this.x -= BigInt(Math.round(clientX - this.input.clientX))
-      this.y -= BigInt(Math.round(clientY - this.input.clientY))
+      this.x = this.x.minus(bigInt(Math.round(clientX - this.input.clientX)))
+      this.y = this.y.minus(bigInt(Math.round(clientY - this.input.clientY)))
       this.input.clientX = clientX
       this.input.clientY = clientY
 
       // Update server camera position
-      const updateDiffX = Math.abs(Number(this.x - this.input.updateX))
-      const updateDiffY = Math.abs(Number(this.y - this.input.updateY))
+      const updateDiffX = Math.abs(this.x.minus(this.input.updateX).toJSNumber())
+      const updateDiffY = Math.abs(this.y.minus(this.input.updateY).toJSNumber())
 
       if (updateDiffX >= this.textureSize || updateDiffY >= this.textureSize) {
         this.pushEvent("camera", { x: this.x.toString(), y: this.y.toString() })
@@ -225,8 +226,8 @@ export default {
       const position = e.data.getLocalPosition(container)
       const offsetX = Math.floor(position.x / this.tileSize)
       const offsetY = Math.floor(position.y / this.tileSize)
-      const tileX = container.partition.x + BigInt(offsetX)
-      const tileY = container.partition.y + BigInt(offsetY)
+      const tileX = container.partition.x.plus(bigInt(offsetX))
+      const tileY = container.partition.y.plus(bigInt(offsetY))
       this.pushEvent("reveal", { x: tileX.toString(), y: tileY.toString() })
     }
   }
