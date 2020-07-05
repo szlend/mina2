@@ -95,7 +95,7 @@ export default {
     for (let [type, x, y, items] of this.actions) {
       switch (type) {
         case "a":
-          this.takeContainer(bigInt(x), bigInt(y), items)
+          this.setupContainer(bigInt(x), bigInt(y), items)
           break
         case "u":
           this.updateContainer(bigInt(x), bigInt(y), items)
@@ -109,7 +109,7 @@ export default {
     this.actions.length = 0
   },
 
-  takeContainer(partitionX, partitionY, items) {
+  setupContainer(partitionX, partitionY, items) {
     const container = this.containerPool.pop() || this.newContainer()
 
     for (let y = 0; y < this.partitionSize; y++) {
