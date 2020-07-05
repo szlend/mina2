@@ -2,6 +2,7 @@ defmodule MinaTest do
   use Mina.DataCase, async: false
 
   alias Mina.{Partition, World}
+  alias Mina.Partition.MockSerializer
 
   setup do
     #  -5   -4   -3   -2   -1    0    1    2    3    4    5
@@ -143,6 +144,30 @@ defmodule MinaTest do
                  {2, -1} => {:proximity, 2}
                }
              }
+    end
+  end
+
+  describe "encode_partition_at/3" do
+    test "it encodes the partition data", %{world: world} do
+      assert Mina.encode_partition_at(world, {0, 0}, MockSerializer) == {:ok, "mock"}
+    end
+  end
+
+  describe "subscribe_partition_at/3" do
+    test "it returns :ok", %{world: world} do
+      assert Mina.subscribe_partition_at(world, {0, 0}, "test") == :ok
+    end
+  end
+
+  describe "unsubscribe_partition_at/3" do
+    test "it returns :ok", %{world: world} do
+      assert Mina.unsubscribe_partition_at(world, {0, 0}, "test") == :ok
+    end
+  end
+
+  describe "boardcast_partition_at!/3" do
+    test "it returns :ok", %{world: world} do
+      assert Mina.broadcast_partition_at!(world, {0, 0}, "test", :test) == :ok
     end
   end
 end

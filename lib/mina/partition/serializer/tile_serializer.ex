@@ -5,7 +5,7 @@ defmodule Mina.Partition.TileSerializer do
 
   @behaviour Mina.Partition.Serializer
 
-  alias Mina.Partition
+  alias Mina.{Partition, World}
 
   @doc """
   Encode partition tiles.
@@ -39,6 +39,24 @@ defmodule Mina.Partition.TileSerializer do
     end
   end
 
+  @doc """
+  Encode a single tile.
+  """
+  @spec encode_tile(World.tile()) :: pos_integer
+  def encode_tile(nil), do: ?u
+  def encode_tile(:mine), do: ?m
+  def encode_tile({:proximity, n}), do: ?0 + n
+
+  @doc """
+  Decode a single tile.
+  """
+  @spec decode_tile(pos_integer) ::
+          :skip | {:ok, World.tile()} | {:error, {:invalid_char, binary}}
+  def decode_tile(?u), do: :skip
+  def decode_tile(?m), do: {:ok, :mine}
+  def decode_tile(n) when n in ?0..?8, do: {:ok, {:proximity, n - ?0}}
+  def decode_tile(char), do: {:error, {:invalid_char, to_string([char])}}
+
   # update x and y at the end of a row
   defp do_decode(data, x, y, size) when x == size do
     do_decode(data, 0, y + 1, size)
@@ -69,13 +87,4 @@ defmodule Mina.Partition.TileSerializer do
       {:error, reason} -> {:error, reason}
     end
   end
-
-  defp encode_tile(nil), do: ?u
-  defp encode_tile(:mine), do: ?m
-  defp encode_tile({:proximity, n}), do: ?0 + n
-
-  defp decode_tile(?u), do: :skip
-  defp decode_tile(?m), do: {:ok, :mine}
-  defp decode_tile(n) when n in ?0..?8, do: {:ok, {:proximity, n - ?0}}
-  defp decode_tile(char), do: {:error, {:invalid_char, to_string([char])}}
 end

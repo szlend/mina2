@@ -4,7 +4,7 @@ defmodule Mina.Partition do
   """
 
   alias __MODULE__
-  alias Mina.World
+  alias Mina.{PubSub, World}
 
   @type t :: %Partition{world: World.t(), position: World.position(), reveals: World.reveals()}
   @type id :: {World.id(), World.position()}
@@ -85,6 +85,35 @@ defmodule Mina.Partition do
   @spec decode(atom, t, term) :: {:ok, term} | {:error, term}
   def decode(serializer, partition, data) do
     serializer.decode(partition, data)
+  end
+
+  @doc """
+  Subscribe to a `topic` scoped to a `partition_id`.
+  """
+  @spec subscribe(id, String.t()) :: :ok | {:error, {:already_registered, pid}}
+  def subscribe(partition_id, topic) do
+    Phoenix.PubSub.subscribe(PubSub, pubsub_topic(partition_id, topic))
+  end
+
+  @doc """
+  Unsubscribe from a `topic` scoped to a `partition_id`.
+  """
+  @spec unsubscribe(id, String.t()) :: :ok
+  def unsubscribe(partition_id, topic) do
+    Phoenix.PubSub.unsubscribe(PubSub, pubsub_topic(partition_id, topic))
+  end
+
+  @doc """
+  Broadcast a `message` to a `topic` scoped to a `partition_id`.
+  """
+  @spec broadcast!(id, String.t(), any) :: :ok
+  def broadcast!(partition_id, topic, message) do
+    Phoenix.PubSub.broadcast!(PubSub, pubsub_topic(partition_id, topic), message)
+  end
+
+  # The Phoenix PubSub topic name
+  defp pubsub_topic({{seed, difficulty, partition_size}, {x, y}}, topic) do
+    "partition:#{seed}-#{difficulty}-#{partition_size}:#{x},#{y}:#{topic}"
   end
 
   # The bounds of the partition, including the border

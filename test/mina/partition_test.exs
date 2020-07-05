@@ -19,7 +19,8 @@ defmodule Mina.PartitionTest do
 
     world = %World{seed: "test", difficulty: 11, partition_size: 5}
     partition = %Partition{world: world, position: {0, 0}, reveals: %{}}
-    [world: world, partition: partition]
+    partition_id = Partition.id(partition)
+    [world: world, partition: partition, partition_id: partition_id]
   end
 
   describe "build/3" do
@@ -170,6 +171,31 @@ defmodule Mina.PartitionTest do
   describe "decode/3" do
     test "it delegates decoding to the serializer", %{partition: partition} do
       assert Partition.decode(MockSerializer, partition, "") == {:ok, partition}
+    end
+  end
+
+  describe "subscribe/2" do
+    test "it receives messages from subscribed topics", %{partition_id: partition_id} do
+      :ok = Partition.subscribe(partition_id, "test")
+      Partition.broadcast!(partition_id, "test", :test_message)
+      assert_received :test_message
+    end
+  end
+
+  describe "unsubscribe/2" do
+    test "it does not receive messages from unsubscribed topics", %{partition_id: partition_id} do
+      :ok = Partition.subscribe(partition_id, "test")
+      :ok = Partition.unsubscribe(partition_id, "test")
+      Partition.broadcast!(partition_id, "test", :test_message)
+      refute_received :test_message
+    end
+  end
+
+  describe "broadcast!/3" do
+    test "it broadcasts messages to subscribed processes", %{partition_id: partition_id} do
+      :ok = Partition.subscribe(partition_id, "test")
+      Partition.broadcast!(partition_id, "test", :test_message)
+      assert_received :test_message
     end
   end
 end
