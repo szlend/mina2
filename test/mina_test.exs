@@ -82,7 +82,7 @@ defmodule MinaTest do
         |> Enum.uniq()
         |> Enum.reduce(%{}, fn position, reveals ->
           {:ok, pid} = Partition.Supervisor.ensure_partition(world, position)
-          partition = :sys.get_state(pid)
+          partition = :sys.get_state(pid).partition
           Map.merge(reveals, partition.reveals)
         end)
 

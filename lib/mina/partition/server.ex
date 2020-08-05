@@ -68,19 +68,27 @@ defmodule Mina.Partition.Server do
   def init(opts) do
     world = Keyword.fetch!(opts, :world)
     position = Keyword.fetch!(opts, :position)
+    timeout = Keyword.get(opts, :timeout, :infinity)
     partition = Partition.build(world, position)
 
-    {:ok, partition}
+    {:ok, %{partition: partition, timeout: timeout, timer: reset_timer(timeout)}}
   end
 
   @impl true
-  def handle_call({:reveal, positions}, _from, partition) do
+  def handle_call({:reveal, positions}, _from, %{partition: partition} = state) do
+    timer = reset_timer(state.timer, state.timeout)
     {partition, reveals, border_positions} = reveal_positions(positions, partition, %{}, %{})
-    {:reply, {reveals, border_positions}, partition}
+    {:reply, {reveals, border_positions}, %{state | partition: partition, timer: timer}}
   end
 
-  def handle_call({:encode, serializer}, _from, partition) do
-    {:reply, Partition.encode(serializer, partition), partition}
+  def handle_call({:encode, serializer}, _from, %{partition: partition} = state) do
+    timer = reset_timer(state.timer, state.timeout)
+    {:reply, Partition.encode(serializer, partition), %{state | timer: timer}}
+  end
+
+  @impl true
+  def handle_info(:shutdown, state) do
+    {:stop, :normal, state}
   end
 
   defp reveal_positions([], partition, reveals, border_positions) do
@@ -96,5 +104,19 @@ defmodule Mina.Partition.Server do
       Map.merge(reveals, new_reveals),
       Map.merge(border_positions, new_border_positions)
     )
+  end
+
+  defp reset_timer(timer \\ nil, timeout)
+
+  defp reset_timer(_timer, :infinity), do: nil
+
+  defp reset_timer(nil, timeout) do
+    {:ok, timer} = :timer.send_after(timeout, :shutdown)
+    timer
+  end
+
+  defp reset_timer(timer, timeout) do
+    {:ok, :cancel} = :timer.cancel(timer)
+    reset_timer(timeout)
   end
 end

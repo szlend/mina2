@@ -31,6 +31,25 @@ defmodule Mina.Partition.ServerTest do
 
       assert Keyword.get(Process.info(server), :registered_name) == __MODULE__
     end
+
+    test "it stops after inactivity", %{world: world} do
+      {:ok, server} =
+        start_supervised({Partition.Server, world: world, position: {0, 0}, timeout: 5})
+
+      assert Process.alive?(server) == true
+      Process.sleep(3)
+      assert Process.alive?(server) == true
+      Process.sleep(2)
+      assert Process.alive?(server) == false
+    end
+
+    test "it doesn't stop after inactivity when timeout is set to :infinity", %{world: world} do
+      {:ok, server} =
+        start_supervised({Partition.Server, world: world, position: {0, 0}, timeout: :infinity})
+
+      Process.sleep(1)
+      assert Process.alive?(server) == true
+    end
   end
 
   describe "via_position/2" do
@@ -68,7 +87,7 @@ defmodule Mina.Partition.ServerTest do
       Partition.Server.reveal(server, [{0, 0}])
       Partition.Server.reveal(server, [{1, 0}])
 
-      assert :sys.get_state(server).reveals == %{
+      assert :sys.get_state(server).partition.reveals == %{
                {0, 0} => {:proximity, 2},
                {1, 0} => :mine
              }
