@@ -33,10 +33,10 @@ defmodule MinaWeb.ConnCase do
   end
 
   setup tags do
-    :ok = SQL.Sandbox.checkout(Mina.Repo)
+    :ok = SQL.Sandbox.checkout(MinaStorage.Repo)
 
     unless tags[:async] do
-      SQL.Sandbox.mode(Mina.Repo, {:shared, self()})
+      SQL.Sandbox.mode(MinaStorage.Repo, {:shared, self()})
     end
 
     {:ok, conn: Phoenix.ConnTest.build_conn()}

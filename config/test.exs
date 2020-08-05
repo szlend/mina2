@@ -5,7 +5,7 @@ use Mix.Config
 # The MIX_TEST_PARTITION environment variable can be used
 # to provide built-in test partitioning in CI environment.
 # Run `mix help test` for more information.
-config :mina, Mina.Repo,
+config :mina, MinaStorage.Repo,
   username: "postgres",
   database: "mina_test#{System.get_env("MIX_TEST_PARTITION")}",
   hostname: "postgres",

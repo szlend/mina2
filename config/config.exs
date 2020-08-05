@@ -8,7 +8,7 @@
 use Mix.Config
 
 config :mina,
-  ecto_repos: [Mina.Repo]
+  ecto_repos: [MinaStorage.Repo]
 
 # Configures the endpoint
 config :mina, MinaWeb.Endpoint,

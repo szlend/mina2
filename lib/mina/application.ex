@@ -12,7 +12,7 @@ defmodule Mina.Application do
       # Start the Partition supervisor
       Mina.Partition.Supervisor,
       # Start the Ecto repository
-      Mina.Repo,
+      MinaStorage.Repo,
       # Start the Telemetry supervisor
       MinaWeb.Telemetry,
       # Start the PubSub system

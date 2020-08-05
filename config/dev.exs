@@ -1,7 +1,7 @@
 use Mix.Config
 
 # Configure your database
-config :mina, Mina.Repo,
+config :mina, MinaStorage.Repo,
   username: "postgres",
   database: "mina_dev",
   hostname: "postgres",
