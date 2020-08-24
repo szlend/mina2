@@ -22,7 +22,6 @@ export default {
       this.y = bigInt(0)
       this.width = 0
       this.height = 0
-      this.actions = []
       this.containerPool = []
 
       this.input = {
@@ -51,13 +50,10 @@ export default {
       }, { passive: false })
 
       this.pushEvent("camera", { x: this.x.toString(), y: this.y.toString() })
+      this.handleEvent("actions", ({ actions }) => this.handleActions(actions))
 
       this.app.ticker.add(this.tick.bind(this))
     })
-  },
-
-  updated() {
-    this.actions.push.apply(this.actions, JSON.parse(this.el.dataset.actions))
   },
 
   tick() {
@@ -79,9 +75,6 @@ export default {
     this.bg.width = (this.width + this.tileSize * 2) / this.tileScale
     this.bg.height = (this.height + this.tileSize * 2) / this.tileScale
 
-    // handle any received actions
-    this.handleActions()
-
     // update container positions
     for (let container of this.app.stage.children) {
       if (container.partition) {
@@ -91,8 +84,8 @@ export default {
     }
   },
 
-  handleActions() {
-    for (let [type, x, y, items] of this.actions) {
+  handleActions(actions) {
+    for (let [type, x, y, items] of actions) {
       switch (type) {
         case "a":
           this.setupContainer(bigInt(x), bigInt(y), items)
@@ -105,8 +98,6 @@ export default {
           break
       }
     }
-
-    this.actions.length = 0
   },
 
   setupContainer(partitionX, partitionY, items) {

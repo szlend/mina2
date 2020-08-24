@@ -39,7 +39,7 @@ defmodule MinaWeb.GameLive do
         partitions: MapSet.new()
       )
 
-    {:ok, socket, temporary_assigns: [actions: []]}
+    {:ok, socket}
   end
 
   @impl true
@@ -79,7 +79,7 @@ defmodule MinaWeb.GameLive do
 
   @impl true
   def handle_info({:action, action}, socket) do
-    {:noreply, assign(socket, actions: [action])}
+    {:noreply, push_event(socket, "actions", %{actions: [action]})}
   end
 
   @impl true
@@ -94,7 +94,6 @@ defmodule MinaWeb.GameLive do
       data-tile-size="<%= @tile_size %>"
       data-tile-scale="<%= @tile_scale %>"
       data-partition-size="<%= @world.partition_size %>"
-      data-actions="<%= Jason.encode_to_iodata!(@actions) %>"
     />
     """
   end
@@ -119,13 +118,14 @@ defmodule MinaWeb.GameLive do
         encode_action_add({x, y}, socket.assigns.world)
       end
 
-    assign(socket,
+    socket
+    |> push_event("actions", %{actions: removed_actions ++ added_actions})
+    |> assign(
       x: x,
       y: y,
       width: width,
       height: height,
-      partitions: partitions,
-      actions: removed_actions ++ added_actions
+      partitions: partitions
     )
   end
 
