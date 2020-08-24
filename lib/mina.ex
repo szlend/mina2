@@ -20,7 +20,7 @@ defmodule Mina do
   defp do_reveal_tile(_world, _partition_position, _positions, 0), do: %{}
 
   defp do_reveal_tile(world, partition_position, positions, depth) do
-    {:ok, server} = Partition.Supervisor.ensure_partition(world, partition_position)
+    {:ok, server} = ensure_partition_at(world, partition_position)
     {reveals, border_positions} = Partition.Server.reveal(server, positions)
 
     Enum.reduce(border_positions, reveals, fn {partition_position, positions}, reveals ->
@@ -41,7 +41,7 @@ defmodule Mina do
   defp do_reveal_tile_partitioned(_world, _partition_position, _positions, 0), do: %{}
 
   defp do_reveal_tile_partitioned(world, partition_position, positions, depth) do
-    {:ok, server} = Partition.Supervisor.ensure_partition(world, partition_position)
+    {:ok, server} = ensure_partition_at(world, partition_position)
     {reveals, border_positions} = Partition.Server.reveal(server, positions)
     partition_reveals = %{partition_position => reveals}
 
@@ -57,6 +57,41 @@ defmodule Mina do
         )
       end
     )
+  end
+
+  @doc """
+  Ensure the partition server on the `world` at `position` is running, returning its pid or error.
+  """
+  @spec ensure_partition_at(World.t(), World.position()) :: {:ok, pid} | {:error, any}
+  def ensure_partition_at(world, position) do
+    config = Application.get_env(:mina, :partition, [])
+    server_opts = Keyword.merge([persistent: true, timeout: 10_000], config)
+    Partition.Supervisor.ensure_partition(Partition.Supervisor, world, position, server_opts)
+  end
+
+  @doc """
+  Save the `partition` reveals to the database.
+  """
+  @spec save_partition(Partition.t()) :: :ok | {:error, any}
+  def save_partition(%{world: world, position: {x, y}} = partition) do
+    with {:ok, encoded_reveals} <- Partition.TileSerializer.encode(partition),
+         compressed_reveals = :erlang.term_to_binary(encoded_reveals, [:compressed]),
+         {:ok, _} <- MinaStorage.set_partition(World.key(world), x, y, compressed_reveals) do
+      :ok
+    end
+  end
+
+  @doc """
+  Load the `partition` reveals from the database.
+  """
+  @spec load_partition(Partition.t()) :: {:ok, Mina.Partition.t()} | {:error, any}
+  def load_partition(%{world: world, position: {x, y}} = partition) do
+    with %{reveals: compressed_reveals} <- MinaStorage.get_partition(World.key(world), x, y) do
+      encoded_reveals = :erlang.binary_to_term(compressed_reveals)
+      Partition.TileSerializer.decode(partition, encoded_reveals)
+    else
+      nil -> {:error, :not_found}
+    end
   end
 
   @doc """

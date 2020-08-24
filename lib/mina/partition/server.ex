@@ -9,6 +9,8 @@ defmodule Mina.Partition.Server do
   @type start_opt ::
           {:world, World.t()}
           | {:position, World.position()}
+          | {:persistent, boolean}
+          | {:timeout, pos_integer | :infinity}
           | {:name, GenServer.name()}
 
   @type via :: {:via, Partition.Registry, Partition.id()}
@@ -66,12 +68,32 @@ defmodule Mina.Partition.Server do
 
   @impl true
   def init(opts) do
+    Process.flag(:trap_exit, true)
+
     world = Keyword.fetch!(opts, :world)
     position = Keyword.fetch!(opts, :position)
     timeout = Keyword.get(opts, :timeout, :infinity)
-    partition = Partition.build(world, position)
 
-    {:ok, %{partition: partition, timeout: timeout, timer: reset_timer(timeout)}}
+    state = %{
+      partition: Partition.build(world, position),
+      persistent: Keyword.get(opts, :persistent, false),
+      timeout: timeout,
+      timer: reset_timer(timeout)
+    }
+
+    {:ok, state, {:continue, :load_state}}
+  end
+
+  @impl true
+  def handle_continue(:load_state, %{persistent: true} = state) do
+    case Mina.load_partition(state.partition) do
+      {:ok, partition} -> {:noreply, %{state | partition: partition}}
+      {:error, :not_found} -> {:noreply, state}
+    end
+  end
+
+  def handle_continue(:load_state, state) do
+    {:noreply, state}
   end
 
   @impl true
@@ -90,6 +112,13 @@ defmodule Mina.Partition.Server do
   def handle_info(:shutdown, state) do
     {:stop, :normal, state}
   end
+
+  @impl true
+  def terminate(:normal, %{persistent: true, partition: partition}) do
+    :ok = Mina.save_partition(partition)
+  end
+
+  def terminate(_reason, _state), do: nil
 
   defp reveal_positions([], partition, reveals, border_positions) do
     {partition, reveals, border_positions}

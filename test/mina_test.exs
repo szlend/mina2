@@ -147,6 +147,37 @@ defmodule MinaTest do
     end
   end
 
+  describe "ensure_partition_at/2" do
+    test "it starts the partition", %{world: world} do
+      assert {:ok, server} = Mina.ensure_partition_at(world, {0, 0})
+      GenServer.stop(server)
+    end
+  end
+
+  describe "save_partition/1" do
+    setup %{world: world} do
+      [partition: Partition.build(world, {0, 0})]
+    end
+
+    test "it saves the partition to the database", %{partition: partition} do
+      partition = %{partition | reveals: %{{0, 0} => :mine}}
+      assert Mina.save_partition(partition) == :ok
+      assert Mina.load_partition(partition) == {:ok, partition}
+    end
+  end
+
+  describe "load_partition/1" do
+    setup %{world: world} do
+      [partition: Partition.build(world, {0, 0})]
+    end
+
+    test "it loads the partition from the database", %{partition: partition} do
+      partition = %{partition | reveals: %{{0, 0} => :mine}}
+      assert Mina.save_partition(partition) == :ok
+      assert Mina.load_partition(partition) == {:ok, partition}
+    end
+  end
+
   describe "encode_partition_at/3" do
     test "it encodes the partition data", %{world: world} do
       assert Mina.encode_partition_at(world, {0, 0}, MockSerializer) == {:ok, "mock"}

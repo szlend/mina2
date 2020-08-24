@@ -49,6 +49,14 @@ defmodule Mina.World do
   end
 
   @doc """
+  Returns the world key.
+  """
+  @spec key(t) :: String.t()
+  def key(world) do
+    "#{world.seed}-#{world.difficulty}-#{world.partition_size}"
+  end
+
+  @doc """
   Check whether a mine is present on the `world` at a given `position`.
   """
   @spec mine_at?(t, position) :: boolean

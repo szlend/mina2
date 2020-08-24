@@ -1,12 +1,13 @@
 defmodule Mina.Partition.Supervisor do
   @moduledoc """
-  A distributed dynamic supervisor for `Mina.Partition.Server`.
+  A distributed dynamic supervisor for `Mina.Server`.
   """
 
   use Horde.DynamicSupervisor
   alias Mina.{Partition, World}
 
   @type start_opt :: {:name, Supervisor.name()}
+  @type server_start_opt :: Partition.Server.start_opt()
 
   @doc """
   Start the partition supervisor with the given `opts`.
@@ -27,23 +28,23 @@ defmodule Mina.Partition.Supervisor do
   @doc """
   Start a partition server under a `supervisor`.
   """
-  @spec start_partition(Supervisor.supervisor(), World.t(), World.position()) ::
+  @spec start_partition(Supervisor.supervisor(), World.t(), World.position(), [server_start_opt]) ::
           {:ok, pid} | {:error, any}
-  def start_partition(supervisor \\ __MODULE__, world, position) do
+  def start_partition(supervisor \\ __MODULE__, world, position, opts \\ []) do
     id = Partition.id_at(world, position)
     name = Partition.Server.via_position(world, position)
-    child_spec = {Partition.Server, world: world, position: position, id: id, name: name}
-    Horde.DynamicSupervisor.start_child(supervisor, child_spec)
+    opts = Keyword.merge(opts, world: world, position: position, id: id, name: name)
+    Horde.DynamicSupervisor.start_child(supervisor, {Partition.Server, opts})
   end
 
   @doc """
   Ensure a partition server is running under a `supervisor`. This will start a new server
   if one is not yet running.
   """
-  @spec ensure_partition(Supervisor.supervisor(), World.t(), World.position()) ::
+  @spec ensure_partition(Supervisor.supervisor(), World.t(), World.position(), [server_start_opt]) ::
           {:ok, pid} | {:error, any}
-  def ensure_partition(supervisor \\ __MODULE__, world, position) do
-    with {:error, {:already_started, pid}} <- start_partition(supervisor, world, position) do
+  def ensure_partition(supervisor \\ __MODULE__, world, position, opts \\ []) do
+    with {:error, {:already_started, pid}} <- start_partition(supervisor, world, position, opts) do
       {:ok, pid}
     end
   end

@@ -56,6 +56,16 @@ defmodule Mina.WorldTest do
     end
   end
 
+  describe "key/1" do
+    setup do
+      [world: %World{seed: "test", difficulty: 11, partition_size: 5}]
+    end
+
+    test "returns the correct id", %{world: world} do
+      assert World.key(world) == "test-11-5"
+    end
+  end
+
   describe "mine_at?/2" do
     test "returns true when a mine is present", %{world: world} do
       assert World.mine_at?(world, {0, 1}) == true
