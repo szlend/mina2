@@ -1,4 +1,8 @@
 defmodule MinaStorage do
+  @moduledoc """
+  Functions for working with Mina database storage.
+  """
+
   import Ecto.Query
   alias MinaStorage.{Partition, Repo}
 

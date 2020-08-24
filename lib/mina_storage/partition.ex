@@ -1,4 +1,8 @@
 defmodule MinaStorage.Partition do
+  @moduledoc """
+  The Partition schema.
+  """
+
   use Ecto.Schema
 
   @primary_key false
