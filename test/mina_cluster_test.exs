@@ -12,6 +12,7 @@ defmodule MinaClusterTest do
   end
 
   describe "reveal_tile/3" do
+    @tag :skip
     test "concurrently reveals expected results across nodes", %{world: world, nodes: nodes} do
       bounds = {{bot_x, bot_y}, {top_x, top_y}} = {{-20, -20}, {19, 19}}
       positions = for x <- bot_x..top_x, y <- bot_y..top_y, do: {x, y}
