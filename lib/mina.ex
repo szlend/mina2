@@ -86,11 +86,13 @@ defmodule Mina do
   """
   @spec load_partition(Partition.t()) :: {:ok, Mina.Partition.t()} | {:error, any}
   def load_partition(%{world: world, position: {x, y}} = partition) do
-    with %{reveals: compressed_reveals} <- MinaStorage.get_partition(World.key(world), x, y) do
-      encoded_reveals = :erlang.binary_to_term(compressed_reveals)
-      Partition.TileSerializer.decode(partition, encoded_reveals)
-    else
-      nil -> {:error, :not_found}
+    case MinaStorage.get_partition(World.key(world), x, y) do
+      %{reveals: compressed_reveals} ->
+        encoded_reveals = :erlang.binary_to_term(compressed_reveals)
+        Partition.TileSerializer.decode(partition, encoded_reveals)
+
+      nil ->
+        {:error, :not_found}
     end
   end
 
