@@ -101,7 +101,7 @@ defmodule Mina do
   """
   @spec encode_partition_at(World.t(), World.position(), atom) :: {:ok, any} | {:error, any}
   def encode_partition_at(world, position, serializer) do
-    with {:ok, server} <- Partition.Supervisor.ensure_partition(world, position) do
+    with {:ok, server} <- ensure_partition_at(world, position) do
       Partition.Server.encode(server, serializer)
     end
   end
