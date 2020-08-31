@@ -45,6 +45,7 @@ defmodule Mina.Partition.TileSerializer do
   @spec encode_tile(World.tile()) :: pos_integer
   def encode_tile(nil), do: ?u
   def encode_tile(:mine), do: ?m
+  def encode_tile(:flag), do: ?f
   def encode_tile({:proximity, n}), do: ?0 + n
 
   @doc """
@@ -54,6 +55,7 @@ defmodule Mina.Partition.TileSerializer do
           :skip | {:ok, World.tile()} | {:error, {:invalid_char, binary}}
   def decode_tile(?u), do: :skip
   def decode_tile(?m), do: {:ok, :mine}
+  def decode_tile(?f), do: {:ok, :flag}
   def decode_tile(n) when n in ?0..?8, do: {:ok, {:proximity, n - ?0}}
   def decode_tile(char), do: {:error, {:invalid_char, to_string([char])}}
 

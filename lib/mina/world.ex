@@ -121,6 +121,26 @@ defmodule Mina.World do
     [{position, tile} | do_reveal(world, adjacent_positions ++ positions, bounds, reveals)]
   end
 
+  @doc """
+  Attempts to flag a tile on the `world` at `position`. If the flagged tile is not a mine, it
+  performs an ordinary reveal. Returns the reveals (`position => tile`).
+
+  ## Options
+
+  The accepted options are:
+
+  * `:bounds` - the inclusive bounds (bottom-left, top-right) to restrict revealing to
+                (e.g, `{{0, 0}, {5, 5}}`). Defaults to `:infinity`.
+  * `:reveals` - a map of existing reveals which to ignore in new reveals.
+  """
+  @spec flag(t, position, [reveal_opt]) :: reveals
+  def flag(world, position, opts \\ []) do
+    case reveal(world, position, opts) do
+      %{^position => :mine} -> %{position => :flag}
+      reveals -> reveals
+    end
+  end
+
   defp adjacent_positions({x, y}) do
     [
       {x - 1, y + 1},

@@ -59,6 +59,15 @@ defmodule Mina.Partition.Server do
   end
 
   @doc """
+  Attempts to flag tiles on a Partition `server` at `positions`. Returns a map of new `reveals`.
+  """
+  @spec flag(GenServer.server(), [World.position()]) ::
+          {World.reveals(), %{Partition.id() => [World.position()]}}
+  def flag(server, positions) do
+    GenServer.call(server, {:flag, positions})
+  end
+
+  @doc """
   Encode the `partition` with the given `serializer` implementing `Mina.Partition.Serializer`.
   """
   @spec encode(GenServer.server(), atom) :: {:ok, term} | {:error, term}
@@ -103,6 +112,12 @@ defmodule Mina.Partition.Server do
     {:reply, {reveals, border_positions}, %{state | partition: partition, timer: timer}}
   end
 
+  def handle_call({:flag, positions}, _from, %{partition: partition} = state) do
+    timer = reset_timer(state.timer, state.timeout)
+    {partition, reveals, border_positions} = flag_positions(positions, partition, %{}, %{})
+    {:reply, {reveals, border_positions}, %{state | partition: partition, timer: timer}}
+  end
+
   def handle_call({:encode, serializer}, _from, %{partition: partition} = state) do
     timer = reset_timer(state.timer, state.timeout)
     {:reply, Partition.encode(serializer, partition), %{state | timer: timer}}
@@ -128,6 +143,21 @@ defmodule Mina.Partition.Server do
     {partition, new_reveals, new_border_positions} = Partition.reveal(partition, position)
 
     reveal_positions(
+      positions,
+      partition,
+      Map.merge(reveals, new_reveals),
+      Map.merge(border_positions, new_border_positions)
+    )
+  end
+
+  defp flag_positions([], partition, reveals, border_positions) do
+    {partition, reveals, border_positions}
+  end
+
+  defp flag_positions([position | positions], partition, reveals, border_positions) do
+    {partition, new_reveals, new_border_positions} = Partition.flag(partition, position)
+
+    flag_positions(
       positions,
       partition,
       Map.merge(reveals, new_reveals),

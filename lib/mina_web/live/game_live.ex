@@ -77,6 +77,20 @@ defmodule MinaWeb.GameLive do
     {:noreply, socket}
   end
 
+  def handle_event("flag", %{"x" => x, "y" => y}, socket) do
+    x = String.to_integer(x)
+    y = String.to_integer(y)
+
+    partition_reveals = Mina.flag_tile_partitioned(socket.assigns.world, {x, y})
+
+    for {partition_position, reveals} <- partition_reveals do
+      message = {:action, encode_action_update(partition_position, reveals)}
+      Mina.broadcast_partition_at!(socket.assigns.world, partition_position, "actions", message)
+    end
+
+    {:noreply, socket}
+  end
+
   @impl true
   def handle_info({:action, action}, socket) do
     {:noreply, push_event(socket, "actions", %{actions: [action]})}

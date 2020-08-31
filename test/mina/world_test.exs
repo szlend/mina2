@@ -158,4 +158,71 @@ defmodule Mina.WorldTest do
              }
     end
   end
+
+  describe "flag/2" do
+    test "flags a mine", %{world: world} do
+      assert World.flag(world, {0, 1}) == %{{0, 1} => :flag}
+    end
+
+    test "reveals a proximate tile", %{world: world} do
+      assert World.flag(world, {0, 0}) == %{{0, 0} => {:proximity, 2}}
+    end
+
+    test "reveals an empty tile", %{world: world} do
+      assert World.flag(world, {1, -2}) == %{
+               {0, -5} => {:proximity, 1},
+               {0, -4} => {:proximity, 1},
+               {0, -3} => {:proximity, 1},
+               {0, -2} => {:proximity, 1},
+               {0, -1} => {:proximity, 1},
+               {1, -5} => {:proximity, 1},
+               {1, -4} => {:proximity, 0},
+               {1, -3} => {:proximity, 0},
+               {1, -2} => {:proximity, 0},
+               {1, -1} => {:proximity, 1},
+               {2, -5} => {:proximity, 1},
+               {2, -4} => {:proximity, 1},
+               {2, -3} => {:proximity, 1},
+               {2, -2} => {:proximity, 1},
+               {2, -1} => {:proximity, 2}
+             }
+    end
+
+    test "reveals only tiles within bounds", %{world: world} do
+      assert World.flag(world, {1, -2}, bounds: {{0, -3}, {2, -1}}) == %{
+               {0, -3} => {:proximity, 1},
+               {0, -2} => {:proximity, 1},
+               {0, -1} => {:proximity, 1},
+               {1, -3} => {:proximity, 0},
+               {1, -2} => {:proximity, 0},
+               {1, -1} => {:proximity, 1},
+               {2, -3} => {:proximity, 1},
+               {2, -2} => {:proximity, 1},
+               {2, -1} => {:proximity, 2}
+             }
+    end
+
+    test "does not reveal tiles outside bounds", %{world: world} do
+      assert World.flag(world, {3, 3}, bounds: {{-2, -2}, {2, 2}}) == %{}
+    end
+
+    test "does not reveal previous reveals", %{world: world} do
+      bounds = {{0, -3}, {2, -1}}
+
+      reveals = %{
+        {0, -3} => {:proximity, 1},
+        {0, -2} => {:proximity, 1},
+        {0, -1} => {:proximity, 1}
+      }
+
+      assert World.flag(world, {1, -2}, bounds: bounds, reveals: reveals) == %{
+               {1, -3} => {:proximity, 0},
+               {1, -2} => {:proximity, 0},
+               {1, -1} => {:proximity, 1},
+               {2, -3} => {:proximity, 1},
+               {2, -2} => {:proximity, 1},
+               {2, -1} => {:proximity, 2}
+             }
+    end
+  end
 end

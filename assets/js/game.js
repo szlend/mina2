@@ -31,7 +31,8 @@ export default {
         clientY: 0,
         startClientX: 0,
         startClientY: 0,
-        moving: false,
+        startTime: 0,
+        canMove: false,
       }
 
       this.canvas.addEventListener("mousedown", (e) => this.pointerDown(e.clientX, e.clientY))
@@ -41,6 +42,7 @@ export default {
       this.canvas.addEventListener("touchstart", (e) => this.pointerDown(e.touches[0].clientX, e.touches[0].clientY))
       this.canvas.addEventListener("touchend", () => this.pointerUp())
       this.canvas.addEventListener("touchmove", (e) => this.pointerMoved(e.touches[0].clientX, e.touches[0].clientY))
+      this.canvas.addEventListener("contextmenu", (e) => e.preventDefault())
 
       this.canvas.addEventListener("wheel", (e) => {
         this.pointerDown(0, 0)
@@ -152,6 +154,7 @@ export default {
     container.interactive = true
     container.on("pointerdown", this.containerPointerDown.bind(this))
     container.on("pointertap", this.containerPointerTap.bind(this))
+    container.on("rightclick", this.containerAltPointerTap.bind(this))
 
     for (let y = 0; y < this.partitionSize; y++) {
       for (let x = 0; x < this.partitionSize; x++) {
@@ -172,17 +175,17 @@ export default {
   },
 
   pointerDown(clientX, clientY) {
-    this.input.moving = true
+    this.input.canMove = true
     this.input.clientX = clientX
     this.input.clientY = clientY
   },
 
   pointerUp() {
-    this.input.moving = false
+    this.input.canMove = false
   },
 
   pointerMoved(clientX, clientY, force) {
-    if (this.input.moving) {
+    if (this.input.canMove) {
       // Update client camera position
       this.x = this.x.minus(bigInt(Math.round(clientX - this.input.clientX)))
       this.y = this.y.minus(bigInt(Math.round(clientY - this.input.clientY)))
@@ -204,6 +207,7 @@ export default {
   containerPointerDown(e) {
     this.input.startClientX = e.data.global.x
     this.input.startClientY = e.data.global.y
+    this.input.startTime = (new Date()).getTime()
   },
 
   containerPointerTap(e) {
@@ -219,7 +223,30 @@ export default {
       const offsetY = Math.floor(position.y / this.tileSize)
       const tileX = container.partition.x.plus(bigInt(offsetX))
       const tileY = container.partition.y.plus(bigInt(offsetY))
-      this.pushEvent("reveal", { x: tileX.toString(), y: tileY.toString() })
+      const endTime = (new Date()).getTime()
+
+      if (endTime - this.input.startTime < 500) {
+        this.pushEvent("reveal", { x: tileX.toString(), y: tileY.toString() })
+      } else {
+        this.pushEvent("flag", { x: tileX.toString(), y: tileY.toString() })
+      }
+    }
+  },
+
+  containerAltPointerTap(e) {
+    const container = e.target
+    const clientX = e.data.global.x
+    const clientY = e.data.global.y
+    const diffX = Math.abs(this.input.startClientX - clientX)
+    const diffY = Math.abs(this.input.startClientY - clientY)
+
+    if (diffX < 4 && diffY < 4) {
+      const position = e.data.getLocalPosition(container)
+      const offsetX = Math.floor(position.x / this.tileSize)
+      const offsetY = Math.floor(position.y / this.tileSize)
+      const tileX = container.partition.x.plus(bigInt(offsetX))
+      const tileY = container.partition.y.plus(bigInt(offsetY))
+      this.pushEvent("flag", { x: tileX.toString(), y: tileY.toString() })
     }
   }
 }
