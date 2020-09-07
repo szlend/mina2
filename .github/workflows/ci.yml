@@ -40,3 +40,14 @@ jobs:
 
       - name: Run tests
         run: docker-compose run mina mix test --trace 2> /dev/null
+
+      - name: Build release
+        id: build_release
+        uses: whoan/docker-build-with-cache-action@v5
+        with:
+          username: ${{ github.repository_owner }}
+          password: ${{ github.token }}
+          registry: docker.pkg.github.com
+          image_name: mina
+          build_extra_args: --target production --build-arg MIX_ENV=prod
+          push_git_tag: true

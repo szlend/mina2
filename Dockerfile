@@ -27,3 +27,28 @@ RUN npm run deploy --prefix assets
 
 COPY . /app/
 RUN mix do compile, phx.digest
+
+# Release environment
+FROM build AS release
+
+ARG MIX_ENV=prod
+ENV MIX_ENV=$MIX_ENV
+
+RUN mix release --quiet
+
+# Production environment
+FROM debian:buster-slim AS production
+
+RUN apt-get update \
+  && apt-get install -y openssl locales locales-all \
+  && rm -rf /var/lib/apt/lists/*
+
+ARG MIX_ENV=prod
+ENV MIX_ENV=$MIX_ENV
+
+WORKDIR /app
+COPY --from=release /app/_build/$MIX_ENV/rel/mina/ /app
+
+ENV LANG=en_US.UTF-8 LANGUAGE=en_US.UTF-8 LC_ALL=en_US.UTF-8
+ENV PATH=/app/bin:$PATH
+CMD mina
