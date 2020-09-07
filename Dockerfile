@@ -51,4 +51,6 @@ COPY --from=release /app/_build/$MIX_ENV/rel/mina/ /app
 
 ENV LANG=en_US.UTF-8 LANGUAGE=en_US.UTF-8 LC_ALL=en_US.UTF-8
 ENV PATH=/app/bin:$PATH
+
+EXPOSE 4000
 CMD mina
