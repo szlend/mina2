@@ -35,7 +35,8 @@ config :mina, MinaWeb.Endpoint,
 # If you are doing OTP releases, you need to instruct Phoenix
 # to start each relevant endpoint:
 #
-#     config :mina, MinaWeb.Endpoint, server: true
+config :mina, MinaWeb.Endpoint, server: true
+
 #
 # Then you can assemble a release by calling `mix release`.
 # See `mix help release` for more information.
