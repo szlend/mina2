@@ -58,6 +58,18 @@ export default {
     })
   },
 
+  disconnected() {
+    // remove all children except the background
+    this.app.stage.removeChildren(1)
+
+    // clear container cache
+    this.containerPool = []
+  },
+
+  reconnected() {
+    this.pushEvent("camera", { x: this.x.toString(), y: this.y.toString() })
+  },
+
   tick() {
     if (this.width !== this.app.renderer.width || this.height !== this.app.renderer.height) {
       this.width = this.app.renderer.width
