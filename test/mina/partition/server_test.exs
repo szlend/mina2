@@ -101,30 +101,17 @@ defmodule Mina.Partition.ServerTest do
     end
 
     test "returns reveals", %{server: server} do
-      {reveals, _border_positions} = Partition.Server.flag(server, [{0, 0}, {1, 0}])
-
-      assert reveals == %{
-               {0, 0} => {:proximity, 2},
-               {1, 0} => :flag
-             }
-    end
-
-    test "returns border_positions", %{server: server} do
-      {_reveals, border_positions} = Partition.Server.flag(server, [{2, 2}])
-
-      assert border_positions == %{
-               {0, 5} => [{0, 5}, {1, 5}, {2, 5}, {3, 5}],
-               {5, 0} => [{5, 1}, {5, 2}, {5, 3}, {5, 4}]
-             }
+      reveals = Partition.Server.flag(server, {1, 0})
+      assert reveals == {:ok, %{{1, 0} => :flag}}
     end
 
     test "keeps track of reveals", %{server: server} do
-      Partition.Server.flag(server, [{0, 0}])
-      Partition.Server.flag(server, [{1, 0}])
+      Partition.Server.flag(server, {1, 0})
+      Partition.Server.flag(server, {5, 0})
 
       assert :sys.get_state(server).partition.reveals == %{
-               {0, 0} => {:proximity, 2},
-               {1, 0} => :flag
+               {1, 0} => :flag,
+               {5, 0} => :flag
              }
     end
   end

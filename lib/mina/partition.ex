@@ -72,28 +72,16 @@ defmodule Mina.Partition do
   end
 
   @doc """
-  Flags a tile on a `partition` at `position`. If the tile is not a mine, it performs a regular
-  reveal. Returns a tuple containing the new `partition`, a map of new `reveals` and positions
-  on bordering partitions that need to be revealed further.
+  Attempts to flag a tile on a `partition` at `position`. If the tile contains a flag, it returns
+  `{:ok, {partition, new_reveals}}` with the updated partition, otherwise `{:error, :incorrect_flag}`.
+  If the tile has already been revealed, it returns `{:error, :already_revealed}`.
   """
-  @spec flag(t, World.position()) :: {t, World.reveals(), %{id => [World.position()]}}
+  @spec flag(t, World.position()) :: {:ok, {t, World.reveals()}} | {:error, :already_revealed}
   def flag(%{world: world, reveals: reveals} = partition, position) do
-    {internal_reveals, border_reveals} =
-      world
-      # reveal with bounds that include the neighbouring border
-      |> World.flag(position, reveals: reveals, bounds: extended_bounds(partition))
-      # group the reveals by partition position
-      |> Enum.group_by(fn {position, _} -> position(world, position) end)
-      # cast each partition's reveals into a map
-      |> Enum.map(fn {position, reveals} -> {position, Map.new(reveals)} end)
-      # split internal reveals and border reveals
-      |> Enum.split_with(fn {position, _} -> position == partition.position end)
-
-    reveals = Map.new(internal_reveals)[partition.position] || %{}
-    border_positions = Map.new(border_reveals, fn {id, reveals} -> {id, Map.keys(reveals)} end)
-    partition = %{partition | reveals: Map.merge(partition.reveals, reveals)}
-
-    {partition, reveals, border_positions}
+    with {:ok, reveals} <- World.flag(world, position, reveals: reveals) do
+      partition = %{partition | reveals: Map.merge(partition.reveals, reveals)}
+      {:ok, {partition, reveals}}
+    end
   end
 
   @doc """

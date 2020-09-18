@@ -170,7 +170,8 @@ defmodule Mina.PartitionTest do
     end
 
     test "updates the partition with new reveals", %{partition: partition} do
-      {partition, _, _} = Partition.flag(%{partition | reveals: %{{-3, -1} => :mine}}, {-2, -1})
+      {:ok, {partition, _}} =
+        Partition.flag(%{partition | reveals: %{{-3, -1} => :mine}}, {-2, -1})
 
       assert partition.reveals == %{
                {-2, -1} => :flag,
@@ -179,53 +180,13 @@ defmodule Mina.PartitionTest do
     end
 
     test "returns reveals", %{partition: partition} do
-      {_, reveals, _} = Partition.flag(partition, {-2, -1})
+      {:ok, {_, reveals}} = Partition.flag(partition, {-2, -1})
       assert reveals == %{{-2, -1} => :flag}
     end
 
     test "does not return existing reveals", %{partition: partition} do
-      {_, reveals, _} = Partition.flag(%{partition | reveals: %{{-2, -1} => :flag}}, {-2, -1})
-      assert reveals == %{}
-    end
-
-    test "does not return reveals outside of bounds", %{partition: partition} do
-      {_, reveals, _} = Partition.flag(partition, {-4, -1})
-
-      assert reveals == %{
-               {-4, -4} => {:proximity, 1},
-               {-4, -3} => {:proximity, 0},
-               {-4, -2} => {:proximity, 0},
-               {-4, -1} => {:proximity, 0},
-               {-3, -4} => {:proximity, 2},
-               {-3, -3} => {:proximity, 0},
-               {-3, -2} => {:proximity, 1},
-               {-3, -1} => {:proximity, 2},
-               {-2, -4} => {:proximity, 2},
-               {-2, -3} => {:proximity, 1},
-               {-2, -2} => {:proximity, 2}
-             }
-    end
-
-    test "returns border positions - top-left", %{world: world} do
-      partition = %Partition{world: world, position: {-4, -4}, reveals: %{}}
-      {_, _, border_positions} = Partition.flag(partition, {-4, -1})
-
-      assert border_positions == %{
-               {-4, 0} => [{-4, 0}, {-3, 0}],
-               {-8, 0} => [{-5, 0}],
-               {-8, -4} => [{-5, -4}, {-5, -3}, {-5, -2}, {-5, -1}]
-             }
-    end
-
-    test "returns border positions - top-right", %{world: world} do
-      partition = %Partition{world: world, position: {0, 0}, reveals: %{}}
-      {_, _, border_positions} = Partition.flag(partition, {3, 3})
-
-      assert border_positions == %{
-               {0, 4} => [{0, 4}, {1, 4}, {2, 4}, {3, 4}],
-               {4, 0} => [{4, 0}, {4, 1}, {4, 2}, {4, 3}],
-               {4, 4} => [{4, 4}]
-             }
+      assert Partition.flag(%{partition | reveals: %{{-2, -1} => :mine}}, {-2, -1}) ==
+               {:error, :already_revealed}
     end
   end
 

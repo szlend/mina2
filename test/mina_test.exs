@@ -99,95 +99,13 @@ defmodule MinaTest do
     end
   end
 
-  describe "reveal_tile_partitioned/3" do
-    test "reveals tiles", %{world: world} do
-      assert Mina.reveal_tile_partitioned(world, {0, 0}) == %{
-               {0, 0} => %{{0, 0} => {:proximity, 2}}
-             }
-    end
-
-    test "reveals tiles across partitions", %{world: world} do
-      assert Mina.reveal_tile_partitioned(world, {1, -2}) == %{
-               {0, -3} => %{
-                 {0, -3} => {:proximity, 1},
-                 {0, -2} => {:proximity, 1},
-                 {0, -1} => {:proximity, 1},
-                 {1, -3} => {:proximity, 0},
-                 {1, -2} => {:proximity, 0},
-                 {1, -1} => {:proximity, 1},
-                 {2, -3} => {:proximity, 1},
-                 {2, -2} => {:proximity, 1},
-                 {2, -1} => {:proximity, 2}
-               },
-               {0, -6} => %{
-                 {0, -5} => {:proximity, 1},
-                 {0, -4} => {:proximity, 1},
-                 {1, -5} => {:proximity, 1},
-                 {1, -4} => {:proximity, 0},
-                 {2, -5} => {:proximity, 1},
-                 {2, -4} => {:proximity, 1}
-               }
-             }
-    end
-
-    test "reveals tiles across partitions with depth limit", %{world: world} do
-      assert Mina.reveal_tile_partitioned(world, {1, -2}, 1) == %{
-               {0, -3} => %{
-                 {0, -3} => {:proximity, 1},
-                 {0, -2} => {:proximity, 1},
-                 {0, -1} => {:proximity, 1},
-                 {1, -3} => {:proximity, 0},
-                 {1, -2} => {:proximity, 0},
-                 {1, -1} => {:proximity, 1},
-                 {2, -3} => {:proximity, 1},
-                 {2, -2} => {:proximity, 1},
-                 {2, -1} => {:proximity, 2}
-               }
-             }
-    end
-  end
-
   describe "flag_tile/3" do
     test "flags a tile", %{world: world} do
-      assert Mina.flag_tile(world, {0, 1}) == %{{0, 1} => :flag}
+      assert Mina.flag_tile(world, {0, 1}) == {:ok, %{{0, 1} => :flag}}
     end
 
-    test "reveals tiles", %{world: world} do
-      assert Mina.flag_tile(world, {0, 0}) == %{{0, 0} => {:proximity, 2}}
-    end
-
-    test "reveals tiles across partitions", %{world: world} do
-      assert Mina.flag_tile(world, {1, -2}) == %{
-               {0, -5} => {:proximity, 1},
-               {0, -4} => {:proximity, 1},
-               {0, -3} => {:proximity, 1},
-               {0, -2} => {:proximity, 1},
-               {0, -1} => {:proximity, 1},
-               {1, -5} => {:proximity, 1},
-               {1, -4} => {:proximity, 0},
-               {1, -3} => {:proximity, 0},
-               {1, -2} => {:proximity, 0},
-               {1, -1} => {:proximity, 1},
-               {2, -5} => {:proximity, 1},
-               {2, -4} => {:proximity, 1},
-               {2, -3} => {:proximity, 1},
-               {2, -2} => {:proximity, 1},
-               {2, -1} => {:proximity, 2}
-             }
-    end
-
-    test "reveals tiles across partitions with depth limit", %{world: world} do
-      assert Mina.flag_tile(world, {1, -2}, 1) == %{
-               {0, -3} => {:proximity, 1},
-               {0, -2} => {:proximity, 1},
-               {0, -1} => {:proximity, 1},
-               {1, -3} => {:proximity, 0},
-               {1, -2} => {:proximity, 0},
-               {1, -1} => {:proximity, 1},
-               {2, -3} => {:proximity, 1},
-               {2, -2} => {:proximity, 1},
-               {2, -1} => {:proximity, 2}
-             }
+    test "returns empty reveals when tile empty", %{world: world} do
+      assert Mina.flag_tile(world, {0, 0}) == {:error, :incorrect_flag}
     end
 
     test "concurrently reveals expected results", %{world: world} do
@@ -218,67 +136,15 @@ defmodule MinaTest do
       # simulate the reveals without partitions
       world_reveals =
         Enum.reduce(positions, %{}, fn position, reveals ->
-          new_reveals = World.flag(world, position, bounds: bounds, reveals: reveals)
-          Map.merge(reveals, new_reveals)
+          case World.flag(world, position, bounds: bounds, reveals: reveals) do
+            {:ok, new_reveals} -> Map.merge(reveals, new_reveals)
+            {:error, _reason} -> reveals
+          end
         end)
 
       # partitioned reveals should match world reveals
       assert Enum.count(partitioned_reveals) == Enum.count(world_reveals)
       assert partitioned_reveals == world_reveals
-    end
-  end
-
-  describe "flag_tile_partitioned/3" do
-    test "flags tiles", %{world: world} do
-      assert Mina.flag_tile_partitioned(world, {0, 1}) == %{
-               {0, 0} => %{{0, 1} => :flag}
-             }
-    end
-
-    test "reveals tiles", %{world: world} do
-      assert Mina.flag_tile_partitioned(world, {0, 0}) == %{
-               {0, 0} => %{{0, 0} => {:proximity, 2}}
-             }
-    end
-
-    test "reveals tiles across partitions", %{world: world} do
-      assert Mina.flag_tile_partitioned(world, {1, -2}) == %{
-               {0, -3} => %{
-                 {0, -3} => {:proximity, 1},
-                 {0, -2} => {:proximity, 1},
-                 {0, -1} => {:proximity, 1},
-                 {1, -3} => {:proximity, 0},
-                 {1, -2} => {:proximity, 0},
-                 {1, -1} => {:proximity, 1},
-                 {2, -3} => {:proximity, 1},
-                 {2, -2} => {:proximity, 1},
-                 {2, -1} => {:proximity, 2}
-               },
-               {0, -6} => %{
-                 {0, -5} => {:proximity, 1},
-                 {0, -4} => {:proximity, 1},
-                 {1, -5} => {:proximity, 1},
-                 {1, -4} => {:proximity, 0},
-                 {2, -5} => {:proximity, 1},
-                 {2, -4} => {:proximity, 1}
-               }
-             }
-    end
-
-    test "reveals tiles across partitions with depth limit", %{world: world} do
-      assert Mina.flag_tile_partitioned(world, {1, -2}, 1) == %{
-               {0, -3} => %{
-                 {0, -3} => {:proximity, 1},
-                 {0, -2} => {:proximity, 1},
-                 {0, -1} => {:proximity, 1},
-                 {1, -3} => {:proximity, 0},
-                 {1, -2} => {:proximity, 0},
-                 {1, -1} => {:proximity, 1},
-                 {2, -3} => {:proximity, 1},
-                 {2, -2} => {:proximity, 1},
-                 {2, -1} => {:proximity, 2}
-               }
-             }
     end
   end
 

@@ -16,13 +16,13 @@ defmodule Mina.World do
   @type seed :: String.t()
   @type difficulty :: non_neg_integer
   @type position :: {integer, integer}
-  @type tile :: :mine | {:proximity, 0..8}
+  @type tile :: :mine | :flag | {:proximity, 0..8}
   @type bounds :: {position, position}
   @type reveals :: %{position => tile}
-  @type partitioned_reveals :: %{position => reveals}
 
   @type build_opt :: {:partition_size, pos_integer}
   @type reveal_opt :: {:bounds, :infinity | bounds} | {:reveals, reveals}
+  @type flag_opt :: {:reveals, reveals}
 
   @doc """
   Builds a new world with the given `seed` and `difficulty`.
@@ -122,22 +122,24 @@ defmodule Mina.World do
   end
 
   @doc """
-  Attempts to flag a tile on the `world` at `position`. If the flagged tile is not a mine, it
-  performs an ordinary reveal. Returns the reveals (`position => tile`).
+  Attempts to flag a tile on the `world` at `position`. If the tile contains a flag, it returns
+  `{:ok, reveals}`, otherwise `{:error, :incorrect_flag}`. If the tile has already been revealed,
+  it returns `{:error, :already_revealed}`.
 
   ## Options
 
   The accepted options are:
 
-  * `:bounds` - the inclusive bounds (bottom-left, top-right) to restrict revealing to
-                (e.g, `{{0, 0}, {5, 5}}`). Defaults to `:infinity`.
   * `:reveals` - a map of existing reveals which to ignore in new reveals.
   """
-  @spec flag(t, position, [reveal_opt]) :: reveals
+  @spec flag(t, position, [flag_opt]) :: {:ok, reveals} | {:error, any}
   def flag(world, position, opts \\ []) do
-    case reveal(world, position, opts) do
-      %{^position => :mine} -> %{position => :flag}
-      reveals -> reveals
+    reveals = Keyword.get(opts, :reveals, %{})
+
+    cond do
+      reveals[position] -> {:error, :already_revealed}
+      mine_at?(world, position) -> {:ok, %{position => :flag}}
+      true -> {:error, :incorrect_flag}
     end
   end
 

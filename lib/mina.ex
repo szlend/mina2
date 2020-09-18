@@ -5,13 +5,11 @@ defmodule Mina do
 
   alias Mina.{Partition, World}
 
-  @type depth :: pos_integer | :infinity
-
   @doc """
   Reveals tiles across partitions on the `world` starting at `position`. You can limit
   the `max_depth` to prevent infinite recursion. Returns a map of reveals.
   """
-  @spec reveal_tile(World.t(), World.position(), depth) :: World.reveals()
+  @spec reveal_tile(World.t(), World.position(), pos_integer | :infinity) :: World.reveals()
   def reveal_tile(world, position, max_depth \\ :infinity) do
     depth = if max_depth == :infinity, do: -1, else: max_depth
     do_reveal_tile(world, Partition.position(world, position), [position], depth)
@@ -29,88 +27,23 @@ defmodule Mina do
   end
 
   @doc """
-  Reveals tiles across partitions on the `world`, starting at `position`. You can limit
-  the `max_depth` to prevent infinite recursion. Returns a map of partitioned reveals.
+  Attempts to flag a tile on the `world` at `position`. Returns `{:ok, new_reveals}` if
+  successful, otherwise `{:error, reason}`.
   """
-  @spec reveal_tile_partitioned(World.t(), World.position(), depth) :: World.partitioned_reveals()
-  def reveal_tile_partitioned(world, position, max_depth \\ :infinity) do
-    depth = if max_depth == :infinity, do: -1, else: max_depth
-    do_reveal_tile_partitioned(world, Partition.position(world, position), [position], depth)
-  end
-
-  defp do_reveal_tile_partitioned(_world, _partition_position, _positions, 0), do: %{}
-
-  defp do_reveal_tile_partitioned(world, partition_position, positions, depth) do
-    {:ok, server} = ensure_partition_at(world, partition_position)
-    {reveals, border_positions} = Partition.Server.reveal(server, positions)
-    partition_reveals = %{partition_position => reveals}
-
-    # Recursively reveal new tiles and merge reveals belonging to the same partition
-    Enum.reduce(
-      border_positions,
-      partition_reveals,
-      fn {partition_position, positions}, partition_reveals ->
-        Map.merge(
-          partition_reveals,
-          do_reveal_tile_partitioned(world, partition_position, positions, depth - 1),
-          fn _, p1, p2 -> Map.merge(p1, p2) end
-        )
-      end
-    )
+  @spec flag_tile(World.t(), World.position()) :: {:ok, World.reveals()} | {:error, any}
+  def flag_tile(world, position) do
+    {:ok, server} = ensure_partition_at(world, Partition.position(world, position))
+    Partition.Server.flag(server, position)
   end
 
   @doc """
-  Attempts to flag a tile across partitions on the `world` at `position`. If the tile
-  contains a mine, it is flagged. Otherwise it performs a regular reveal. You can limit
-  the `max_depth` to prevent infinite recursion. Returns a map of reveals.
+  Partition `reveals` according to partition size defined by `world`.
   """
-  @spec flag_tile(World.t(), World.position(), depth) :: World.reveals()
-  def flag_tile(world, position, max_depth \\ :infinity) do
-    depth = if max_depth == :infinity, do: -1, else: max_depth
-    do_flag_tile(world, Partition.position(world, position), [position], depth)
-  end
-
-  defp do_flag_tile(_world, _partition_position, _positions, 0), do: %{}
-
-  defp do_flag_tile(world, partition_position, positions, depth) do
-    {:ok, server} = ensure_partition_at(world, partition_position)
-    {reveals, border_positions} = Partition.Server.flag(server, positions)
-
-    Enum.reduce(border_positions, reveals, fn {partition_position, positions}, reveals ->
-      Map.merge(reveals, do_flag_tile(world, partition_position, positions, depth - 1))
-    end)
-  end
-
-  @doc """
-  Attempts to flag a tile across partitions on the `world` at `position`. If the tile
-  contains a mine, it is flagged. Otherwise it performs a regular reveal. You can limit
-  the `max_depth` to prevent infinite recursion. Returns a map of partitioned reveals.
-  """
-  @spec flag_tile_partitioned(World.t(), World.position(), depth) :: World.partitioned_reveals()
-  def flag_tile_partitioned(world, position, max_depth \\ :infinity) do
-    depth = if max_depth == :infinity, do: -1, else: max_depth
-    do_flag_tile_partitioned(world, Partition.position(world, position), [position], depth)
-  end
-
-  defp do_flag_tile_partitioned(_world, _partition_position, _positions, 0), do: %{}
-
-  defp do_flag_tile_partitioned(world, partition_position, positions, depth) do
-    {:ok, server} = ensure_partition_at(world, partition_position)
-    {reveals, border_positions} = Partition.Server.flag(server, positions)
-    partition_reveals = %{partition_position => reveals}
-
-    # Recursively reveal new tiles and merge reveals belonging to the same partition
-    Enum.reduce(
-      border_positions,
-      partition_reveals,
-      fn {partition_position, positions}, partition_reveals ->
-        Map.merge(
-          partition_reveals,
-          do_flag_tile_partitioned(world, partition_position, positions, depth - 1),
-          fn _, p1, p2 -> Map.merge(p1, p2) end
-        )
-      end
-    )
+  @spec partition_reveals(World.t(), World.reveals()) :: %{World.position() => World.reveals()}
+  def partition_reveals(world, reveals) do
+    reveals
+    |> Enum.group_by(fn {position, _tile} -> Partition.position(world, position) end)
+    |> Map.new(fn {position, reveals} -> {position, Map.new(reveals)} end)
   end
 
   @doc """
