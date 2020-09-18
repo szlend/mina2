@@ -99,13 +99,13 @@ export default {
   },
 
   handleActions(actions) {
-    for (let [type, x, y, items] of actions) {
+    for (let [type, x, y, color, items] of actions) {
       switch (type) {
         case "a":
           this.setupContainer(bigInt(x), bigInt(y), items)
           break
         case "u":
-          this.updateContainer(bigInt(x), bigInt(y), items)
+          this.updateContainer(bigInt(x), bigInt(y), color, items)
           break
         case "r":
           this.releaseContainer(bigInt(x), bigInt(y))
@@ -120,17 +120,18 @@ export default {
     for (let y = 0; y < this.partitionSize; y++) {
       for (let x = 0; x < this.partitionSize; x++) {
         const idx = y * this.partitionSize + x
-        container.children[idx].texture = this.tileset[items[idx]]
+        const tile = container.children[idx]
+        tile.texture = this.tileset[items[idx]]
+        tile.tint = 0xFFFFFF
       }
     }
 
-    container.children[container.children.length - 1].text = `${partitionX}, ${partitionY}`
     container.partition = { x: partitionX, y: partitionY }
     container.visible = true
     container.cacheAsBitmap = true
   },
 
-  updateContainer(partitionX, partitionY, items) {
+  updateContainer(partitionX, partitionY, color, items) {
     const container = this.findContainer(partitionX, partitionY)
     container.cacheAsBitmap = false
 
@@ -138,6 +139,29 @@ export default {
       const idx = y * this.partitionSize + x
       container.children[idx].texture = this.tileset[t]
     }
+
+    const tint = 0xFFFFFF - color
+    let alpha = 1.0
+
+    const timer = setInterval(() => {
+      container.cacheAsBitmap = false
+
+      const fadedTint = (alpha <= 0)
+        ? 0xFFFFFF
+        : 0xFFFFFF - (PIXI.utils.premultiplyTint(tint, alpha) & 0xFFFFFF)
+
+      for (let [x, y, t] of items) {
+        const idx = y * this.partitionSize + x
+        container.children[idx].tint = fadedTint
+      }
+
+      if (alpha <= 0) {
+        clearInterval(timer)
+        container.cacheAsBitmap = true
+      }
+
+      alpha -= 0.0625
+    }, 16)
 
     container.cacheAsBitmap = true
   },
@@ -165,8 +189,9 @@ export default {
     container.buttonMode = true
     container.interactive = true
     container.on("pointerdown", this.containerPointerDown.bind(this))
-    container.on("pointertap", this.containerPointerTap.bind(this))
-    container.on("rightclick", this.containerAltPointerTap.bind(this))
+    container.on("mouseup", this.containerLeftClick.bind(this))
+    container.on("rightclick", this.containerRightClick.bind(this))
+    container.on("tap", this.containerTouch.bind(this))
 
     for (let y = 0; y < this.partitionSize; y++) {
       for (let x = 0; x < this.partitionSize; x++) {
@@ -178,9 +203,6 @@ export default {
         container.addChild(tile)
       }
     }
-
-    const text = new PIXI.Text('TEST', { fontFamily: 'Arial', fontSize: 24, fill: 0x000000, align: 'left' })
-    container.addChild(text)
 
     this.app.stage.addChild(container)
     return container
@@ -222,19 +244,23 @@ export default {
     this.input.startTime = (new Date()).getTime()
   },
 
-  containerPointerTap(e) {
-    const container = e.target
-    const clientX = e.data.global.x
-    const clientY = e.data.global.y
-    const diffX = Math.abs(this.input.startClientX - clientX)
-    const diffY = Math.abs(this.input.startClientY - clientY)
+  containerLeftClick(e) {
+    if (this.isWithinDeadzone(e.data.global.x, e.data.global.y)) {
+      const [tileX, tileY] = this.containerEventTilePosition(e)
+      this.pushEvent("reveal", { x: tileX.toString(), y: tileY.toString() })
+    }
+  },
 
-    if (diffX < 4 && diffY < 4) {
-      const position = e.data.getLocalPosition(container)
-      const offsetX = Math.floor(position.x / this.tileSize)
-      const offsetY = Math.floor(position.y / this.tileSize)
-      const tileX = container.partition.x.plus(bigInt(offsetX))
-      const tileY = container.partition.y.plus(bigInt(offsetY))
+  containerRightClick(e) {
+    if (this.isWithinDeadzone(e.data.global.x, e.data.global.y)) {
+      const [tileX, tileY] = this.containerEventTilePosition(e)
+      this.pushEvent("flag", { x: tileX.toString(), y: tileY.toString() })
+    }
+  },
+
+  containerTouch(e) {
+    if (this.isWithinDeadzone(e.data.global.x, e.data.global.y)) {
+      const [tileX, tileY] = this.containerEventTilePosition(e)
       const endTime = (new Date()).getTime()
 
       if (endTime - this.input.startTime < 500) {
@@ -245,21 +271,20 @@ export default {
     }
   },
 
-  containerAltPointerTap(e) {
-    const container = e.target
-    const clientX = e.data.global.x
-    const clientY = e.data.global.y
+  containerEventTilePosition(event) {
+    const container = event.target
+    const position = event.data.getLocalPosition(container)
+    const offsetX = Math.floor(position.x / this.tileSize)
+    const offsetY = Math.floor(position.y / this.tileSize)
+    const tileX = container.partition.x.plus(bigInt(offsetX))
+    const tileY = container.partition.y.plus(bigInt(offsetY))
+    return [tileX, tileY]
+  },
+
+  isWithinDeadzone(clientX, clientY) {
     const diffX = Math.abs(this.input.startClientX - clientX)
     const diffY = Math.abs(this.input.startClientY - clientY)
-
-    if (diffX < 4 && diffY < 4) {
-      const position = e.data.getLocalPosition(container)
-      const offsetX = Math.floor(position.x / this.tileSize)
-      const offsetY = Math.floor(position.y / this.tileSize)
-      const tileX = container.partition.x.plus(bigInt(offsetX))
-      const tileY = container.partition.y.plus(bigInt(offsetY))
-      this.pushEvent("flag", { x: tileX.toString(), y: tileY.toString() })
-    }
+    return diffX < 4 && diffY < 4
   }
 }
 

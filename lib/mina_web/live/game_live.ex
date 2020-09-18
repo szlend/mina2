@@ -66,12 +66,14 @@ defmodule MinaWeb.GameLive do
   def handle_event("reveal", %{"x" => x, "y" => y}, socket) do
     x = String.to_integer(x)
     y = String.to_integer(y)
+    world = socket.assigns.world
 
-    partition_reveals = Mina.reveal_tile_partitioned(socket.assigns.world, {x, y})
+    reveals = Mina.reveal_tile(world, {x, y})
+    partitioned_reveals = Mina.partition_reveals(world, reveals)
 
-    for {partition_position, reveals} <- partition_reveals do
+    for {partition_position, reveals} <- partitioned_reveals do
       message = {:action, encode_action_update(partition_position, reveals)}
-      Mina.broadcast_partition_at!(socket.assigns.world, partition_position, "actions", message)
+      Mina.broadcast_partition_at!(world, partition_position, "actions", message)
     end
 
     {:noreply, socket}
@@ -80,15 +82,32 @@ defmodule MinaWeb.GameLive do
   def handle_event("flag", %{"x" => x, "y" => y}, socket) do
     x = String.to_integer(x)
     y = String.to_integer(y)
+    world = socket.assigns.world
 
-    partition_reveals = Mina.flag_tile_partitioned(socket.assigns.world, {x, y})
+    case Mina.flag_tile(world, {x, y}) do
+      {:ok, reveals} ->
+        partitioned_reveals = Mina.partition_reveals(world, reveals)
 
-    for {partition_position, reveals} <- partition_reveals do
-      message = {:action, encode_action_update(partition_position, reveals)}
-      Mina.broadcast_partition_at!(socket.assigns.world, partition_position, "actions", message)
+        for {partition_position, reveals} <- partitioned_reveals do
+          message = {:action, encode_action_update(partition_position, reveals)}
+          Mina.broadcast_partition_at!(world, partition_position, "actions", message)
+        end
+
+        {:noreply, socket}
+
+      {:error, :incorrect_flag} ->
+        partitioned_reveals = Mina.partition_reveals(world, %{{x, y} => nil})
+
+        for {partition_position, reveals} <- partitioned_reveals do
+          message = {:action, encode_action_update(partition_position, reveals)}
+          Mina.broadcast_partition_at!(world, partition_position, "actions", message)
+        end
+
+        {:noreply, socket}
+
+      {:error, :already_revealed} ->
+        {:noreply, socket}
     end
-
-    {:noreply, socket}
   end
 
   @impl true
@@ -170,15 +189,22 @@ defmodule MinaWeb.GameLive do
         [x - px, y - py, to_string([char])]
       end
 
-    ["u", to_string(px), to_string(py), data]
+    ["u", to_string(px), to_string(py), reveals_color(reveals), data]
   end
 
   defp encode_action_add({px, py}, world) do
     {:ok, data} = Mina.encode_partition_at(world, {px, py}, TileSerializer)
-    ["a", to_string(px), to_string(py), data]
+    ["a", to_string(px), to_string(py), 0xFFFFFF, data]
   end
 
   defp encode_action_remove({px, py}) do
-    ["r", to_string(px), to_string(py), nil]
+    ["r", to_string(px), to_string(py), 0xFFFFFF, nil]
   end
+
+  defp reveals_color(reveals), do: tile_color(hd(Map.values(reveals)))
+
+  defp tile_color(nil), do: 0xFF0000
+  defp tile_color(:mine), do: 0xFF0000
+  defp tile_color(:flag), do: 0x00FF00
+  defp tile_color(_tile), do: 0x00FF00
 end
