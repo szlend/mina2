@@ -47,7 +47,7 @@ defmodule Mina.MixProject do
       {:gettext, "~> 0.11"},
       {:jason, "~> 1.0"},
       {:plug_cowboy, "~> 2.0"},
-      {:horde, "~> 0.8.0-rc.1"},
+      {:horde, "~> 0.8.0"},
       {:mix_test_watch, "~> 1.0", only: [:dev], runtime: false},
       {:credo, "~> 1.4", only: [:dev, :test], runtime: false}
     ]
