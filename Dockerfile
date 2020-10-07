@@ -1,5 +1,5 @@
 # Development environment
-FROM elixir:1.10-slim AS development
+FROM hexpm/elixir:1.11.0-erlang-23.1-ubuntu-focal-20200703 AS development
 
 RUN apt-get update \
   && apt-get install -y curl ca-certificates inotify-tools \
@@ -37,7 +37,7 @@ ENV MIX_ENV=$MIX_ENV
 RUN mix release --quiet
 
 # Production environment
-FROM debian:buster-slim AS production
+FROM ubuntu:focal-slim AS production
 
 RUN apt-get update \
   && apt-get install -y openssl locales locales-all \
