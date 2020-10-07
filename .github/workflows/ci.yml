@@ -24,11 +24,9 @@ jobs:
           build_extra_args: --target build --build-arg MIX_ENV=test
           push_git_tag: true
 
-      - name: Export image name
-        run: echo ::set-env name=IMAGE_NAME::${{ steps.build_application.outputs.FULL_IMAGE_NAME }}
-
       - name: Setup environment
         run: |
+          echo IMAGE_NAME=${{ steps.build_application.outputs.FULL_IMAGE_NAME }} >> .env
           docker-compose up --no-start
           docker-compose run mina mix do ecto.create, ecto.migrate 2> /dev/null
 
