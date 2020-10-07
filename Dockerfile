@@ -2,7 +2,7 @@
 FROM hexpm/elixir:1.11.0-erlang-23.1-ubuntu-focal-20200703 AS development
 
 RUN apt-get update \
-  && apt-get install -y curl ca-certificates inotify-tools \
+  && apt-get install -y curl ca-certificates inotify-tools wait-for-it \
   && curl -sL https://deb.nodesource.com/setup_12.x | bash - \
   && apt-get install -y nodejs \
   && mix do local.hex --force, local.rebar --force \
