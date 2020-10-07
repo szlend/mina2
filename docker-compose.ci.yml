@@ -2,5 +2,9 @@ version: "3.7"
 
 services:
   mina:
-    image: $IMAGE_NAME
+    build:
+      context: .
+      target: build
+      args:
+        MIX_ENV: test
     entrypoint: "wait-for-it postgres:5432 --"

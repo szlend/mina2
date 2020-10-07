@@ -2,8 +2,8 @@ name: Continuous integration
 on: [push]
 
 jobs:
-  test:
-    name: Run tests
+  ci:
+    name: CI
     runs-on: ubuntu-latest
 
     env:
@@ -13,20 +13,17 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
+      - name: Pull Docker images
+        run: docker-compose pull
+
+      - uses: satackey/action-docker-layer-caching@v0.0.8
+        continue-on-error: true
+
       - name: Build application
-        id: build_application
-        uses: whoan/docker-build-with-cache-action@v5
-        with:
-          username: ${{ github.repository_owner }}
-          password: ${{ github.token }}
-          registry: docker.pkg.github.com
-          image_name: mina-ci
-          build_extra_args: --target build --build-arg MIX_ENV=test
-          push_git_tag: true
+        run: docker-compose build
 
       - name: Setup environment
         run: |
-          echo IMAGE_NAME=${{ steps.build_application.outputs.FULL_IMAGE_NAME }} >> .env
           docker-compose up --no-start
           docker-compose run mina mix do ecto.create, ecto.migrate 2> /dev/null
 
@@ -39,13 +36,8 @@ jobs:
       - name: Run tests
         run: docker-compose run mina mix test --trace 2> /dev/null
 
+      - uses: satackey/action-docker-layer-caching@v0.0.8
+        continue-on-error: true
+
       - name: Build release
-        id: build_release
-        uses: whoan/docker-build-with-cache-action@v5
-        with:
-          username: ${{ github.repository_owner }}
-          password: ${{ github.token }}
-          registry: docker.pkg.github.com
-          image_name: mina
-          build_extra_args: --target production --build-arg MIX_ENV=prod
-          push_git_tag: true
+        run: docker build . --target production --build-arg MIX_ENV=prod
