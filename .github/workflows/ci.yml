@@ -21,12 +21,14 @@ jobs:
           password: ${{ github.token }}
           registry: docker.pkg.github.com
           image_name: mina-ci
+          image_tag: ${{ github.sha }}
           build_extra_args: --target build --build-arg MIX_ENV=test
           push_git_tag: true
 
       - name: Setup environment
         run: |
-          echo IMAGE_NAME=${{ steps.build_application.outputs.FULL_IMAGE_NAME }} >> .env
+          docker images
+          docker tag ${{ steps.build_application.outputs.FULL_IMAGE_NAME }}:${{ github.sha }} mina-ci:latest
           docker-compose up --no-start
           docker-compose run mina mix do ecto.create, ecto.migrate 2> /dev/null
 
@@ -39,6 +41,14 @@ jobs:
       - name: Run tests
         run: docker-compose run mina mix test --trace 2> /dev/null
 
+  build:
+    name: Build image
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
       - name: Build release
         id: build_release
         uses: whoan/docker-build-with-cache-action@v5
@@ -47,5 +57,6 @@ jobs:
           password: ${{ github.token }}
           registry: docker.pkg.github.com
           image_name: mina
+          image_tag: ${{ github.sha }}-prod
           build_extra_args: --target production --build-arg MIX_ENV=prod
           push_git_tag: true
