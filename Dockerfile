@@ -37,7 +37,7 @@ ENV MIX_ENV=$MIX_ENV
 RUN mix release --quiet
 
 # Production environment
-FROM ubuntu:focal-slim AS production
+FROM ubuntu:20.04 AS production
 
 RUN apt-get update \
   && apt-get install -y openssl locales locales-all \
