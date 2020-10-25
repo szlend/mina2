@@ -82,9 +82,11 @@ defmodule Mina.Partition.Server do
     world = Keyword.fetch!(opts, :world)
     position = Keyword.fetch!(opts, :position)
     timeout = Keyword.get(opts, :timeout, :infinity)
+    partition = Partition.build(world, position)
 
     state = %{
-      partition: Partition.build(world, position),
+      partition: partition,
+      orig_partition: partition,
       persistent: Keyword.get(opts, :persistent, false),
       timeout: timeout,
       timer: reset_timer(timeout)
@@ -96,7 +98,7 @@ defmodule Mina.Partition.Server do
   @impl true
   def handle_continue(:load_state, %{persistent: true} = state) do
     case Mina.load_partition(state.partition) do
-      {:ok, partition} -> {:noreply, %{state | partition: partition}}
+      {:ok, partition} -> {:noreply, %{state | partition: partition, orig_partition: partition}}
       {:error, :not_found} -> {:noreply, state}
     end
   end
@@ -135,8 +137,10 @@ defmodule Mina.Partition.Server do
   end
 
   @impl true
-  def terminate(:normal, %{persistent: true, partition: partition}) do
-    :ok = Mina.save_partition(partition)
+  def terminate(:normal, state) do
+    if state.persistent && state.partition != state.orig_partition do
+      :ok = Mina.save_partition(state.partition)
+    end
   end
 
   def terminate(_reason, _state), do: nil
