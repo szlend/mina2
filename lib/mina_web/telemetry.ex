@@ -31,11 +31,11 @@ defmodule MinaWeb.Telemetry do
       ),
 
       # Database Metrics
-      summary("mina.repo.query.total_time", unit: {:native, :millisecond}),
-      summary("mina.repo.query.decode_time", unit: {:native, :millisecond}),
-      summary("mina.repo.query.query_time", unit: {:native, :millisecond}),
-      summary("mina.repo.query.queue_time", unit: {:native, :millisecond}),
-      summary("mina.repo.query.idle_time", unit: {:native, :millisecond}),
+      summary("mina_storage.repo.query.total_time", unit: {:native, :millisecond}),
+      summary("mina_storage.repo.query.decode_time", unit: {:native, :millisecond}),
+      summary("mina_storage.repo.query.query_time", unit: {:native, :millisecond}),
+      summary("mina_storage.repo.query.queue_time", unit: {:native, :millisecond}),
+      summary("mina_storage.repo.query.idle_time", unit: {:native, :millisecond}),
 
       # VM Metrics
       summary("vm.memory.total", unit: {:byte, :kilobyte}),
