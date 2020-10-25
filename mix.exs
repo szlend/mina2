@@ -20,7 +20,7 @@ defmodule Mina.MixProject do
   def application do
     [
       mod: {Mina.Application, []},
-      extra_applications: [:logger, :runtime_tools]
+      extra_applications: [:logger, :runtime_tools, :os_mon]
     ]
   end
 
@@ -41,7 +41,7 @@ defmodule Mina.MixProject do
       {:floki, ">= 0.0.0", only: :test},
       {:phoenix_html, "~> 2.11"},
       {:phoenix_live_reload, "~> 1.2", only: :dev},
-      {:phoenix_live_dashboard, "~> 0.2.0"},
+      {:phoenix_live_dashboard, "~> 0.3.3"},
       {:telemetry_metrics, "~> 0.5"},
       {:telemetry_poller, "~> 0.5", override: true},
       {:gettext, "~> 0.11"},
