@@ -99,13 +99,13 @@ export default {
   },
 
   handleActions(actions) {
-    for (let [type, x, y, color, items] of actions) {
+    for (let [type, x, y, node, color, items] of actions) {
       switch (type) {
         case "a":
-          this.setupContainer(bigInt(x), bigInt(y), items)
+          this.setupContainer(bigInt(x), bigInt(y), node, items)
           break
         case "u":
-          this.updateContainer(bigInt(x), bigInt(y), color, items)
+          this.updateContainer(bigInt(x), bigInt(y), node, color, items)
           break
         case "r":
           this.releaseContainer(bigInt(x), bigInt(y))
@@ -114,7 +114,7 @@ export default {
     }
   },
 
-  setupContainer(partitionX, partitionY, items) {
+  setupContainer(partitionX, partitionY, node, items) {
     const container = this.containerPool.pop() || this.newContainer()
 
     for (let y = 0; y < this.partitionSize; y++) {
@@ -126,12 +126,15 @@ export default {
       }
     }
 
+    const text = container.children[container.children.length - 1]
+    text.text = node
+
     container.partition = { x: partitionX, y: partitionY }
     container.visible = true
     container.cacheAsBitmap = true
   },
 
-  updateContainer(partitionX, partitionY, color, items) {
+  updateContainer(partitionX, partitionY, node, color, items) {
     const container = this.findContainer(partitionX, partitionY)
     container.cacheAsBitmap = false
 
@@ -162,6 +165,9 @@ export default {
 
       alpha -= 0.0625
     }, 16)
+
+    const text = container.children[container.children.length - 1]
+    text.text = node
 
     container.cacheAsBitmap = true
   },
@@ -203,6 +209,9 @@ export default {
         container.addChild(tile)
       }
     }
+
+    const text = new PIXI.Text("")
+    container.addChild(text)
 
     this.app.stage.addChild(container)
     return container

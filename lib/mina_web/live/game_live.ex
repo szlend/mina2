@@ -72,7 +72,7 @@ defmodule MinaWeb.GameLive do
     partitioned_reveals = Mina.partition_reveals(world, reveals)
 
     for {partition_position, reveals} <- partitioned_reveals do
-      message = {:action, encode_action_update(partition_position, reveals)}
+      message = {:action, encode_action_update(partition_position, world, reveals)}
       Mina.broadcast_partition_at!(world, partition_position, "actions", message)
     end
 
@@ -89,7 +89,7 @@ defmodule MinaWeb.GameLive do
         partitioned_reveals = Mina.partition_reveals(world, reveals)
 
         for {partition_position, reveals} <- partitioned_reveals do
-          message = {:action, encode_action_update(partition_position, reveals)}
+          message = {:action, encode_action_update(partition_position, world, reveals)}
           Mina.broadcast_partition_at!(world, partition_position, "actions", message)
         end
 
@@ -99,7 +99,7 @@ defmodule MinaWeb.GameLive do
         partitioned_reveals = Mina.partition_reveals(world, %{{x, y} => nil})
 
         for {partition_position, reveals} <- partitioned_reveals do
-          message = {:action, encode_action_update(partition_position, reveals)}
+          message = {:action, encode_action_update(partition_position, world, reveals)}
           Mina.broadcast_partition_at!(world, partition_position, "actions", message)
         end
 
@@ -182,23 +182,25 @@ defmodule MinaWeb.GameLive do
     MapSet.new(for y <- ys, x <- xs, do: {x, y})
   end
 
-  defp encode_action_update({px, py}, reveals) do
+  defp encode_action_update({px, py}, world, reveals) do
     data =
       for {{x, y}, tile} <- reveals do
         char = TileSerializer.encode_tile(tile)
         [x - px, y - py, to_string([char])]
       end
 
-    ["u", to_string(px), to_string(py), reveals_color(reveals), data]
+    {:ok, pid} = Mina.ensure_partition_at(world, {px, py})
+    ["u", to_string(px), to_string(py), node(pid), reveals_color(reveals), data]
   end
 
   defp encode_action_add({px, py}, world) do
+    {:ok, pid} = Mina.ensure_partition_at(world, {px, py})
     {:ok, data} = Mina.encode_partition_at(world, {px, py}, TileSerializer)
-    ["a", to_string(px), to_string(py), 0xFFFFFF, data]
+    ["a", to_string(px), to_string(py), node(pid), 0xFFFFFF, data]
   end
 
   defp encode_action_remove({px, py}) do
-    ["r", to_string(px), to_string(py), 0xFFFFFF, nil]
+    ["r", to_string(px), to_string(py), nil, 0xFFFFFF, nil]
   end
 
   defp reveals_color(reveals), do: tile_color(hd(Map.values(reveals)))

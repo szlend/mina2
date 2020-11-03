@@ -137,7 +137,8 @@ defmodule Mina.Partition.Server do
   end
 
   @impl true
-  def terminate(:normal, state) do
+  def terminate(reason, state) when reason in [:normal, :shutdown] do
+    IO.puts("TERMINATING")
     if state.persistent && state.partition != state.orig_partition do
       :ok = Mina.save_partition(state.partition)
     end

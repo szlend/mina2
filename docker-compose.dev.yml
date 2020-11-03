@@ -10,8 +10,65 @@ services:
     build:
       context: .
       target: development
+    hostname: mina
+    command: bash -c "mix release --overwrite && exec _build/prod/rel/mina/bin/mina start"
     volumes:
       - mina_deps:/app/deps
       - mina_build:/app/_build
       - mina_node_modules:/app/assets/node_modules
       - .:/app
+    environment:
+      MIX_ENV: prod
+      HOST: localhost
+      DATABASE_URL: ecto://postgres@postgres/mina_dev
+      SECRET_KEY_BASE: testtesttesttesttesttesttesttesttesttesttesttesttesttesttesttest
+      RELEASE_NODE: mina@mina
+      RELEASE_COOKIE: test
+
+  mina2:
+    build:
+      context: .
+      target: development
+    hostname: mina2
+    command: bash -c "wait-for-it mina:4000 && exec _build/prod/rel/mina/bin/mina start"
+    depends_on:
+      - mina
+      - postgres
+    ports:
+      - 4001:4000
+    volumes:
+      - mina_deps:/app/deps
+      - mina_build:/app/_build
+      - mina_node_modules:/app/assets/node_modules
+      - .:/app
+    environment:
+      MIX_ENV: prod
+      HOST: localhost
+      DATABASE_URL: ecto://postgres@postgres/mina_dev
+      SECRET_KEY_BASE: testtesttesttesttesttesttesttesttesttesttesttesttesttesttesttest
+      RELEASE_NODE: mina@mina2
+      RELEASE_COOKIE: test
+
+  mina3:
+    build:
+      context: .
+      target: development
+    hostname: mina3
+    command: bash -c "wait-for-it mina:4000 && exec _build/prod/rel/mina/bin/mina start"
+    depends_on:
+      - mina
+      - postgres
+    ports:
+      - 4002:4000
+    volumes:
+      - mina_deps:/app/deps
+      - mina_build:/app/_build
+      - mina_node_modules:/app/assets/node_modules
+      - .:/app
+    environment:
+      MIX_ENV: prod
+      HOST: localhost
+      DATABASE_URL: ecto://postgres@postgres/mina_dev
+      SECRET_KEY_BASE: testtesttesttesttesttesttesttesttesttesttesttesttesttesttesttest
+      RELEASE_NODE: mina@mina3
+      RELEASE_COOKIE: test

@@ -6,21 +6,23 @@ defmodule Mina.Application do
   use Application
 
   def start(_type, _args) do
+    topologies = Application.get_env(:libcluster, :topologies)
+
     children = [
+      # Start cluster supervisor
+      {Cluster.Supervisor, [topologies, [name: Mina.ClusterSupervisor]]},
+      # Start the Ecto repository
+      MinaStorage.Repo,
+      # Start the PubSub system
+      {Phoenix.PubSub, name: Mina.PubSub},
       # Start the Partition registry
       Mina.Partition.Registry,
       # Start the Partition supervisor
       Mina.Partition.Supervisor,
-      # Start the Ecto repository
-      MinaStorage.Repo,
       # Start the Telemetry supervisor
       MinaWeb.Telemetry,
-      # Start the PubSub system
-      {Phoenix.PubSub, name: Mina.PubSub},
       # Start the Endpoint (http/https)
       MinaWeb.Endpoint
-      # Start a worker by calling: Mina.Worker.start_link(arg)
-      # {Mina.Worker, arg}
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html
