@@ -1,5 +1,5 @@
 defmodule MinaTest do
-  use Mina.DataCase, async: false
+  use Mina.AppCase
 
   alias Mina.{Partition, World}
 
@@ -17,7 +17,6 @@ defmodule MinaTest do
     # ["1", "1", "2", "2", "2", "1", ".", "1", "x", "2", "3"], -4
     # ["1", "x", "2", "x", "2", "1", "1", "1", "2", "x", "3"]  -5
 
-    on_exit(&reset_state/0)
     [world: %World{seed: "test", difficulty: 11, partition_size: 3}]
   end
 

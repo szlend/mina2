@@ -28,6 +28,11 @@ defmodule Mina.DataCase do
     end
   end
 
+  setup_all do
+    start_supervised(MinaStorage.Repo)
+    :ok
+  end
+
   setup tags do
     :ok = SQL.Sandbox.checkout(MinaStorage.Repo)
 
@@ -52,12 +57,5 @@ defmodule Mina.DataCase do
         opts |> Keyword.get(String.to_existing_atom(key), key) |> to_string()
       end)
     end)
-  end
-
-  @doc """
-  A helper that resets the Mina application back to initial state.
-  """
-  def reset_state do
-    Mina.MinaHelpers.reset_state()
   end
 end

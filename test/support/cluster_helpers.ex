@@ -22,16 +22,16 @@ defmodule Mina.ClusterHelpers do
   """
   @spec start_nodes(String.t(), pos_integer()) :: [node]
   def start_nodes(prefix, amount) do
-    # Start the nodes sequentially, as starting them concurrently leads to
-    # race conditions
-    for idx <- 1..amount do
+    Enum.map(1..amount, fn idx ->
       args = '-setcookie "#{:erlang.get_cookie()}"'
       {:ok, node} = :slave.start_link('127.0.0.1', :"#{prefix}#{idx}", args)
-
+      node
+    end)
+    |> Task.async_stream(fn node ->
       # Configure path and start Mix
-      true = :rpc.call(node, :code, :set_path, [:code.get_path()])
-      {:ok, _} = :rpc.call(node, Application, :ensure_all_started, [:mix])
-      :ok = :rpc.call(node, Mix, :env, [Mix.env()])
+      true = :erpc.call(node, :code, :set_path, [:code.get_path()])
+      {:ok, _} = :erpc.call(node, Application, :ensure_all_started, [:mix])
+      :ok = :erpc.call(node, Mix, :env, [Mix.env()])
 
       mix_args = [
         "app.start",
@@ -48,10 +48,11 @@ defmodule Mina.ClusterHelpers do
       ]
 
       # Start the application
-      :ok = :rpc.call(node, Mix.CLI, :main, [mix_args])
+      :ok = :erpc.call(node, Mix.CLI, :main, [mix_args])
 
       node
-    end
+    end)
+    |> Enum.map(fn {:ok, node} -> node end)
   end
 
   @doc """

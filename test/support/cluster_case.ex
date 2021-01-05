@@ -5,10 +5,11 @@ defmodule Mina.ClusterCase do
   """
 
   use ExUnit.CaseTemplate
-  alias Mina.{ClusterHelpers, MinaHelpers}
+  alias Mina.ClusterHelpers
 
   using do
     quote do
+      use Mina.DataCase, async: false
       import Mina.ClusterHelpers, only: [start_nodes: 2]
       import Mina.ClusterCase
     end
@@ -16,14 +17,10 @@ defmodule Mina.ClusterCase do
 
   setup_all do
     ClusterHelpers.start()
-    :ok
+    on_exit(fn -> ClusterHelpers.stop() end)
   end
 
-  @doc """
-  A helper that resets the Mina application back to initial state within a cluster.
-  """
-  def reset_state do
-    MinaHelpers.reset_cluster_state()
-    MinaHelpers.reset_state()
+  setup do
+    on_exit(fn -> ClusterHelpers.stop_nodes(Node.list() -- [Node.self()]) end)
   end
 end
