@@ -25,4 +25,4 @@ config :mina, :partition_registry, delta_crdt_options: [sync_interval: 50]
 config :mina, :partition_supervisor, delta_crdt_options: [sync_interval: 50]
 
 # Print only warnings and errors during test
-config :logger, level: :warn
+config :logger, level: :warning
