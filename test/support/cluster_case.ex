@@ -9,7 +9,6 @@ defmodule Mina.ClusterCase do
 
   using do
     quote do
-      use Mina.DataCase, async: false
       import Mina.ClusterHelpers, only: [start_nodes: 2]
       import Mina.ClusterCase
     end
@@ -20,7 +19,10 @@ defmodule Mina.ClusterCase do
     on_exit(fn -> ClusterHelpers.stop() end)
   end
 
-  setup do
-    on_exit(fn -> ClusterHelpers.stop_nodes(Node.list() -- [Node.self()]) end)
+  setup tags do
+    if tags[:async], do: raise("ClusterCase cannot run in async mode")
+    :ok = Application.stop(:mina)
+    {:ok, _app} = Application.ensure_all_started(:mina)
+    :ok
   end
 end

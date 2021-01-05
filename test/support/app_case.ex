@@ -6,14 +6,10 @@ defmodule Mina.AppCase do
 
   use ExUnit.CaseTemplate
 
-  using do
-    quote do
-      use Mina.DataCase, async: false
-    end
-  end
-
-  setup do
+  setup tags do
+    if tags[:async], do: raise("AppCase cannot run in async mode")
+    :ok = Application.stop(:mina)
     {:ok, _app} = Application.ensure_all_started(:mina)
-    on_exit(fn -> Application.stop(:mina) end)
+    :ok
   end
 end

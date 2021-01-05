@@ -1,5 +1,5 @@
 defmodule MinaTest do
-  use Mina.AppCase
+  use Mina.AppCase, async: false
 
   alias Mina.{Partition, World}
 

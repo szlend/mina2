@@ -1,5 +1,5 @@
 defmodule MinaClusterTest do
-  use Mina.ClusterCase
+  use Mina.ClusterCase, async: false
 
   alias Mina.{Partition, World}
 
@@ -9,7 +9,6 @@ defmodule MinaClusterTest do
     [world: world, nodes: nodes]
   end
 
-  @tag timeout: :infinity
   describe "reveal_tile/3" do
     test "concurrently reveals expected results across nodes", %{world: world, nodes: nodes} do
       bounds = {{bot_x, bot_y}, {top_x, top_y}} = {{-20, -20}, {19, 19}}

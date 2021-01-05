@@ -28,12 +28,12 @@ defmodule Mina.DataCase do
     end
   end
 
-  setup_all do
-    start_supervised(MinaStorage.Repo)
-    :ok
-  end
-
   setup tags do
+    unless tags[:async] do
+      :ok = Application.stop(:mina)
+      {:ok, _app} = Application.ensure_all_started(:mina)
+    end
+
     :ok = SQL.Sandbox.checkout(MinaStorage.Repo)
 
     unless tags[:async] do
