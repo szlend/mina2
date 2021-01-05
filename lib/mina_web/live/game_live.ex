@@ -77,7 +77,7 @@ defmodule MinaWeb.GameLive do
   end
 
   @impl true
-  def handle_info({:loaded, :skip}, socket) do
+  def handle_info({:add, :skip}, socket) do
     {:noreply, socket}
   end
 
