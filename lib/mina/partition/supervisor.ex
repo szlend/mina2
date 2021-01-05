@@ -31,7 +31,7 @@ defmodule Mina.Partition.Supervisor do
   @spec start_partition(Supervisor.supervisor(), World.t(), World.position(), [server_start_opt]) ::
           {:ok, pid} | {:error, any}
   def start_partition(supervisor \\ __MODULE__, world, position, opts \\ []) do
-    id = Partition.id_at(world, position)
+    id = Partition.build_id(world, position)
     name = Partition.Server.via_position(world, position)
     opts = Keyword.merge(opts, world: world, position: position, id: id, name: name)
     Horde.DynamicSupervisor.start_child(supervisor, {Partition.Server, opts})

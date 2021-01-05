@@ -37,59 +37,26 @@ defmodule Mina do
   end
 
   @doc """
-  Partition `reveals` according to partition size defined by `world`.
+  Return the id of a partition on the `world` at tile `position`.
   """
-  @spec partition_reveals(World.t(), World.reveals()) :: %{World.position() => World.reveals()}
-  def partition_reveals(world, reveals) do
-    reveals
-    |> Enum.group_by(fn {position, _tile} -> Partition.position(world, position) end)
-    |> Map.new(fn {position, reveals} -> {position, Map.new(reveals)} end)
+  @spec partition_id_at(World.t(), World.position()) :: Partition.id()
+  def partition_id_at(world, position) do
+    Partition.id_at(world, position)
   end
 
   @doc """
-  Ensure the partition server on the `world` at `position` is running, returning its pid or error.
+  Loads the partition data on the `world` at partition `position`. In case the partition is
+  already running, the loading is skipped, returning `{:ok, :skip}` instead.
   """
-  @spec ensure_partition_at(World.t(), World.position()) :: {:ok, pid} | {:error, any}
-  def ensure_partition_at(world, position) do
-    config = Application.get_env(:mina, :partition, [])
-    server_opts = Keyword.merge([persistent: true, timeout: 10_000], config)
-    Partition.Supervisor.ensure_partition(Partition.Supervisor, world, position, server_opts)
-  end
+  @spec load_partition_at(World.t(), World.position()) ::
+          {:ok, Partition.t() | :skip} | {:error, any}
+  def load_partition_at(world, position) do
+    server_opts = partition_server_opts()
 
-  @doc """
-  Save the `partition` reveals to the database.
-  """
-  @spec save_partition(Partition.t()) :: :ok | {:error, any}
-  def save_partition(%{world: world, position: {x, y}} = partition) do
-    with {:ok, encoded_reveals} <- Partition.TileSerializer.encode(partition),
-         compressed_reveals = :erlang.term_to_binary(encoded_reveals, [:compressed]),
-         {:ok, _} <- MinaStorage.set_partition(World.key(world), x, y, compressed_reveals) do
-      :ok
-    end
-  end
-
-  @doc """
-  Load the `partition` reveals from the database.
-  """
-  @spec load_partition(Partition.t()) :: {:ok, Mina.Partition.t()} | {:error, any}
-  def load_partition(%{world: world, position: {x, y}} = partition) do
-    case MinaStorage.get_partition(World.key(world), x, y) do
-      %{reveals: compressed_reveals} ->
-        encoded_reveals = :erlang.binary_to_term(compressed_reveals)
-        Partition.TileSerializer.decode(partition, encoded_reveals)
-
-      nil ->
-        {:error, :not_found}
-    end
-  end
-
-  @doc """
-  Loads the partition server on the `world` at `position` and encodes its data with the `serializer`.
-  """
-  @spec encode_partition_at(World.t(), World.position(), atom) :: {:ok, any} | {:error, any}
-  def encode_partition_at(world, position, serializer) do
-    with {:ok, server} <- ensure_partition_at(world, position) do
-      Partition.Server.encode(server, serializer)
+    case Partition.Supervisor.start_partition(Partition.Supervisor, world, position, server_opts) do
+      {:ok, _pid} -> {:ok, :skip}
+      {:error, {:already_started, pid}} -> {:ok, Partition.Server.load(pid)}
+      {:error, reason} -> {:error, reason}
     end
   end
 
@@ -99,7 +66,7 @@ defmodule Mina do
   @spec subscribe_partition_at(World.t(), World.position(), String.t()) :: :ok | {:error, any}
   def subscribe_partition_at(world, position, topic) do
     world
-    |> Partition.id_at(position)
+    |> Partition.build_id(position)
     |> Partition.subscribe(topic)
   end
 
@@ -109,17 +76,17 @@ defmodule Mina do
   @spec unsubscribe_partition_at(World.t(), World.position(), String.t()) :: :ok
   def unsubscribe_partition_at(world, position, topic) do
     world
-    |> Partition.id_at(position)
+    |> Partition.build_id(position)
     |> Partition.unsubscribe(topic)
   end
 
-  @doc """
-  Broadcast a `message` to a `topic` scoped to a partition on the `world` at `position`.
-  """
-  @spec broadcast_partition_at!(World.t(), World.position(), String.t(), any) :: :ok
-  def broadcast_partition_at!(world, position, topic, message) do
-    world
-    |> Partition.id_at(position)
-    |> Partition.broadcast!(topic, message)
+  defp ensure_partition_at(world, position) do
+    server_opts = partition_server_opts()
+    Partition.Supervisor.ensure_partition(Partition.Supervisor, world, position, server_opts)
+  end
+
+  defp partition_server_opts do
+    config = Application.get_env(:mina, :partition, [])
+    Keyword.merge([persistent: true, timeout: 10_000], config)
   end
 end

@@ -2,7 +2,6 @@ defmodule MinaTest do
   use Mina.DataCase, async: false
 
   alias Mina.{Partition, World}
-  alias Mina.Partition.MockSerializer
 
   setup do
     #  -5   -4   -3   -2   -1    0    1    2    3    4    5
@@ -148,40 +147,20 @@ defmodule MinaTest do
     end
   end
 
-  describe "ensure_partition_at/2" do
-    test "it starts the partition", %{world: world} do
-      assert {:ok, server} = Mina.ensure_partition_at(world, {0, 0})
-      GenServer.stop(server)
+  describe "partition_id_at/2" do
+    test "it returns the partition id", %{world: world} do
+      assert {{"test", 11, 3}, {0, 0}} = Mina.partition_id_at(world, {1, 1})
     end
   end
 
-  describe "save_partition/1" do
-    setup %{world: world} do
-      [partition: Partition.build(world, {0, 0})]
+  describe "load_partition_at/2" do
+    test "it skips loading when starting a new partition", %{world: world} do
+      assert {:ok, :skip} = Mina.load_partition_at(world, {0, 0})
     end
 
-    test "it saves the partition to the database", %{partition: partition} do
-      partition = %{partition | reveals: %{{0, 0} => :mine}}
-      assert Mina.save_partition(partition) == :ok
-      assert Mina.load_partition(partition) == {:ok, partition}
-    end
-  end
-
-  describe "load_partition/1" do
-    setup %{world: world} do
-      [partition: Partition.build(world, {0, 0})]
-    end
-
-    test "it loads the partition from the database", %{partition: partition} do
-      partition = %{partition | reveals: %{{0, 0} => :mine}}
-      assert Mina.save_partition(partition) == :ok
-      assert Mina.load_partition(partition) == {:ok, partition}
-    end
-  end
-
-  describe "encode_partition_at/3" do
-    test "it encodes the partition data", %{world: world} do
-      assert Mina.encode_partition_at(world, {0, 0}, MockSerializer) == {:ok, "mock"}
+    test "it loads the partition data", %{world: world} do
+      {:ok, _server} = Mina.load_partition_at(world, {0, 0})
+      assert {:ok, %Partition{}} = Mina.load_partition_at(world, {0, 0})
     end
   end
 
@@ -194,12 +173,6 @@ defmodule MinaTest do
   describe "unsubscribe_partition_at/3" do
     test "it returns :ok", %{world: world} do
       assert Mina.unsubscribe_partition_at(world, {0, 0}, "test") == :ok
-    end
-  end
-
-  describe "boardcast_partition_at!/3" do
-    test "it returns :ok", %{world: world} do
-      assert Mina.broadcast_partition_at!(world, {0, 0}, "test", :test) == :ok
     end
   end
 end

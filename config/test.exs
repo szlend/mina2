@@ -21,6 +21,7 @@ config :mina, MinaWeb.Endpoint,
 # Increase the number of restarts to prevent the application
 # from shutting down between tests
 config :mina, :supervisor_opts, max_restarts: 10_000
+config :mina, :partition, persistent: false, timeout: :infinity
 
 # Print only warnings and errors during test
 config :logger, level: :warn

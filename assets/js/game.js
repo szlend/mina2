@@ -115,7 +115,10 @@ export default {
   },
 
   setupContainer(partitionX, partitionY, items) {
-    const container = this.containerPool.pop() || this.newContainer()
+    const container =
+      this.findContainer(partitionX, partitionY) ||
+      this.containerPool.pop() ||
+      this.newContainer()
 
     for (let y = 0; y < this.partitionSize; y++) {
       for (let x = 0; x < this.partitionSize; x++) {

@@ -46,7 +46,7 @@ defmodule Mina.Partition.Server do
   """
   @spec via_position(World.t(), World.position()) :: via
   def via_position(world, position) do
-    {:via, Partition.Registry, Partition.id_at(world, position)}
+    {:via, Partition.Registry, Partition.build_id(world, position)}
   end
 
   @doc """
@@ -67,12 +67,9 @@ defmodule Mina.Partition.Server do
     GenServer.call(server, {:flag, position})
   end
 
-  @doc """
-  Encode the `partition` with the given `serializer` implementing `Mina.Partition.Serializer`.
-  """
-  @spec encode(GenServer.server(), atom) :: {:ok, term} | {:error, term}
-  def encode(server, serializer) do
-    GenServer.call(server, {:encode, serializer})
+  @spec load(GenServer.server()) :: Partition.t()
+  def load(server) do
+    GenServer.call(server, :load)
   end
 
   @impl true
@@ -97,9 +94,14 @@ defmodule Mina.Partition.Server do
 
   @impl true
   def handle_continue(:load_state, %{persistent: true} = state) do
-    case Mina.load_partition(state.partition) do
-      {:ok, partition} -> {:noreply, %{state | partition: partition, orig_partition: partition}}
-      {:error, :not_found} -> {:noreply, state}
+    case Partition.load(state.partition) do
+      {:ok, partition} ->
+        partition_id = Partition.id(state.partition)
+        Partition.broadcast!(partition_id, "actions", {:up, partition_id, partition})
+        {:noreply, %{state | partition: partition, orig_partition: partition}}
+
+      {:error, :not_found} ->
+        {:noreply, state}
     end
   end
 
@@ -110,7 +112,10 @@ defmodule Mina.Partition.Server do
   @impl true
   def handle_call({:reveal, positions}, _from, %{partition: partition} = state) do
     timer = reset_timer(state.timer, state.timeout)
+    partition_id = Partition.id(partition)
     {partition, reveals, border_positions} = reveal_positions(positions, partition, %{}, %{})
+
+    Partition.broadcast!(partition_id, "actions", {:reveal, partition_id, reveals})
     {:reply, {reveals, border_positions}, %{state | partition: partition, timer: timer}}
   end
 
@@ -119,6 +124,8 @@ defmodule Mina.Partition.Server do
 
     case Partition.flag(partition, position) do
       {:ok, {partition, reveals}} ->
+        partition_id = Partition.id(partition)
+        Partition.broadcast!(partition_id, "actions", {:flag, partition_id, reveals})
         {:reply, {:ok, reveals}, %{state | partition: partition, timer: timer}}
 
       {:error, reason} ->
@@ -126,9 +133,9 @@ defmodule Mina.Partition.Server do
     end
   end
 
-  def handle_call({:encode, serializer}, _from, %{partition: partition} = state) do
+  def handle_call(:load, _from, %{partition: partition} = state) do
     timer = reset_timer(state.timer, state.timeout)
-    {:reply, Partition.encode(serializer, partition), %{state | timer: timer}}
+    {:reply, partition, %{state | timer: timer}}
   end
 
   @impl true
@@ -137,13 +144,19 @@ defmodule Mina.Partition.Server do
   end
 
   @impl true
-  def terminate(:normal, state) do
+  def terminate(:normal, %{partition: partition} = state) do
+    partition_id = Partition.id(partition)
+    Partition.broadcast!(partition_id, "actions", {:down, partition_id})
+
     if state.persistent && state.partition != state.orig_partition do
-      :ok = Mina.save_partition(state.partition)
+      :ok = Partition.save(state.partition)
     end
   end
 
-  def terminate(_reason, _state), do: nil
+  def terminate(_reason, %{partition: partition}) do
+    partition_id = Partition.id(partition)
+    Partition.broadcast!(partition_id, "actions", {:down, partition_id})
+  end
 
   defp reveal_positions([], partition, reveals, border_positions) do
     {partition, reveals, border_positions}

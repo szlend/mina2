@@ -1,7 +1,6 @@
 defmodule Mina.PartitionTest do
   use Mina.DataCase, async: true
   alias Mina.{Partition, World}
-  alias Mina.Partition.MockSerializer
 
   setup do
     #  -5   -4   -3   -2   -1    0    1    2    3    4    5
@@ -79,19 +78,25 @@ defmodule Mina.PartitionTest do
     end
   end
 
-  describe "id_at/1" do
+  describe "build_id/1" do
     test "returns the correct partition id", %{world: world} do
-      assert Partition.id_at(world, {0, 0}) == {{"test", 11, 5}, {0, 0}}
+      assert Partition.build_id(world, {0, 0}) == {{"test", 11, 5}, {0, 0}}
     end
 
     test "raises an error with invalid position", %{world: world} do
-      assert_raise FunctionClauseError, fn -> Partition.id_at(world, {1, 1}) end
+      assert_raise FunctionClauseError, fn -> Partition.build_id(world, {1, 1}) end
     end
   end
 
   describe "id/1" do
     test "returns the correct partition id", %{partition: partition} do
       assert Partition.id(partition) == {{"test", 11, 5}, {0, 0}}
+    end
+  end
+
+  describe "id_at/2" do
+    test "returns the correct partition id", %{world: world} do
+      assert Partition.id_at(world, {1, 1}) == {{"test", 11, 5}, {0, 0}}
     end
   end
 
@@ -187,18 +192,6 @@ defmodule Mina.PartitionTest do
     test "does not return existing reveals", %{partition: partition} do
       assert Partition.flag(%{partition | reveals: %{{-2, -1} => :mine}}, {-2, -1}) ==
                {:error, :already_revealed}
-    end
-  end
-
-  describe "encode/2" do
-    test "it delegates encoding to the serializer", %{partition: partition} do
-      assert Partition.encode(MockSerializer, partition) == {:ok, "mock"}
-    end
-  end
-
-  describe "decode/3" do
-    test "it delegates decoding to the serializer", %{partition: partition} do
-      assert Partition.decode(MockSerializer, partition, "") == {:ok, partition}
     end
   end
 

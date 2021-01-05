@@ -4,7 +4,6 @@ defmodule MinaWeb.GameLive do
   """
 
   use MinaWeb, :live_view
-
   alias Mina.Partition.TileSerializer
 
   @tileset %{
@@ -44,74 +43,70 @@ defmodule MinaWeb.GameLive do
 
   @impl true
   def handle_event("resize", %{"width" => width, "height" => height}, socket) do
-    x = socket.assigns.x
-    y = socket.assigns.y
-    width = trunc(width)
-    height = trunc(height)
+    {x, y} = {socket.assigns.x, socket.assigns.y}
+    {width, height} = {trunc(width), trunc(height)}
     socket = handle_viewport_change(socket, x, y, width, height)
     {:noreply, socket}
   end
 
   @impl true
   def handle_event("camera", %{"x" => x, "y" => y}, socket) do
-    x = String.to_integer(x)
-    y = String.to_integer(y)
-    width = socket.assigns.width
-    height = socket.assigns.height
+    {x, y} = {String.to_integer(x), String.to_integer(y)}
+    {width, height} = {socket.assigns.width, socket.assigns.height}
     socket = handle_viewport_change(socket, x, y, width, height)
     {:noreply, socket}
   end
 
   @impl true
   def handle_event("reveal", %{"x" => x, "y" => y}, socket) do
-    x = String.to_integer(x)
-    y = String.to_integer(y)
+    {x, y} = {String.to_integer(x), String.to_integer(y)}
+    Mina.reveal_tile(socket.assigns.world, {x, y})
+    {:noreply, socket}
+  end
+
+  def handle_event("flag", %{"x" => x, "y" => y}, socket) do
+    {x, y} = {String.to_integer(x), String.to_integer(y)}
     world = socket.assigns.world
 
-    reveals = Mina.reveal_tile(world, {x, y})
-    partitioned_reveals = Mina.partition_reveals(world, reveals)
-
-    for {partition_position, reveals} <- partitioned_reveals do
-      message = {:action, encode_action_update(partition_position, reveals)}
-      Mina.broadcast_partition_at!(world, partition_position, "actions", message)
+    if Mina.flag_tile(world, {x, y}) == {:error, :incorrect_flag} do
+      partition_id = Mina.partition_id_at(world, {x, y})
+      send(self(), {:flag, partition_id, %{{x, y} => nil}})
     end
 
     {:noreply, socket}
   end
 
-  def handle_event("flag", %{"x" => x, "y" => y}, socket) do
-    x = String.to_integer(x)
-    y = String.to_integer(y)
-    world = socket.assigns.world
-
-    case Mina.flag_tile(world, {x, y}) do
-      {:ok, reveals} ->
-        partitioned_reveals = Mina.partition_reveals(world, reveals)
-
-        for {partition_position, reveals} <- partitioned_reveals do
-          message = {:action, encode_action_update(partition_position, reveals)}
-          Mina.broadcast_partition_at!(world, partition_position, "actions", message)
-        end
-
-        {:noreply, socket}
-
-      {:error, :incorrect_flag} ->
-        partitioned_reveals = Mina.partition_reveals(world, %{{x, y} => nil})
-
-        for {partition_position, reveals} <- partitioned_reveals do
-          message = {:action, encode_action_update(partition_position, reveals)}
-          Mina.broadcast_partition_at!(world, partition_position, "actions", message)
-        end
-
-        {:noreply, socket}
-
-      {:error, :already_revealed} ->
-        {:noreply, socket}
-    end
+  @impl true
+  def handle_info({:loaded, :skip}, socket) do
+    {:noreply, socket}
   end
 
-  @impl true
-  def handle_info({:action, action}, socket) do
+  def handle_info({:add, partition}, socket) do
+    action = encode_action_add(partition)
+    {:noreply, push_event(socket, "actions", %{actions: [action]})}
+  end
+
+  def handle_info({:remove, position}, socket) do
+    action = encode_action_remove(socket.assigns.world, position)
+    {:noreply, push_event(socket, "actions", %{actions: [action]})}
+  end
+
+  def handle_info({:up, _partition_id, partition}, socket) do
+    action = encode_action_add(partition)
+    {:noreply, push_event(socket, "actions", %{actions: [action]})}
+  end
+
+  def handle_info({:down, _partition_id}, socket) do
+    {:noreply, socket}
+  end
+
+  def handle_info({:reveal, {_world_id, position}, reveals}, socket) do
+    action = encode_action_update(socket.assigns.world, position, reveals)
+    {:noreply, push_event(socket, "actions", %{actions: [action]})}
+  end
+
+  def handle_info({:flag, {_world_id, position}, reveals}, socket) do
+    action = encode_action_update(socket.assigns.world, position, reveals)
     {:noreply, push_event(socket, "actions", %{actions: [action]})}
   end
 
@@ -132,34 +127,25 @@ defmodule MinaWeb.GameLive do
   end
 
   defp handle_viewport_change(socket, x, y, width, height) do
+    world = socket.assigns.world
     partitions = partitions_in_viewport(socket, x, y, width, height)
-
     added = MapSet.difference(partitions, socket.assigns.partitions)
     removed = MapSet.difference(socket.assigns.partitions, partitions)
 
-    # Unsubscribe from partitions out of the viewport
-    removed_actions =
-      for {x, y} <- removed do
-        Mina.unsubscribe_partition_at(socket.assigns.world, {x, y}, "actions")
-        encode_action_remove({x, y})
-      end
+    # Unsubscribe from partition ids out of the viewport
+    for position <- removed do
+      Mina.unsubscribe_partition_at(world, position, "actions")
+      send(self(), {:remove, position})
+    end
 
     # Subscribe to partitions in the viewport
-    added_actions =
-      for {x, y} <- added do
-        Mina.subscribe_partition_at(socket.assigns.world, {x, y}, "actions")
-        encode_action_add({x, y}, socket.assigns.world)
-      end
+    for position <- added do
+      Mina.subscribe_partition_at(world, position, "actions")
+      {:ok, partition} = Mina.load_partition_at(world, position)
+      send(self(), {:add, partition})
+    end
 
-    socket
-    |> push_event("actions", %{actions: removed_actions ++ added_actions})
-    |> assign(
-      x: x,
-      y: y,
-      width: width,
-      height: height,
-      partitions: partitions
-    )
+    assign(socket, x: x, y: y, width: width, height: height, partitions: partitions)
   end
 
   defp partitions_in_viewport(socket, x, y, width, height) do
@@ -182,7 +168,16 @@ defmodule MinaWeb.GameLive do
     MapSet.new(for y <- ys, x <- xs, do: {x, y})
   end
 
-  defp encode_action_update({px, py}, reveals) do
+  defp encode_action_add(%{position: {px, py}} = partition) do
+    {:ok, data} = TileSerializer.encode(partition)
+    ["a", to_string(px), to_string(py), 0xFFFFFF, data]
+  end
+
+  defp encode_action_remove(_world, {px, py}) do
+    ["r", to_string(px), to_string(py), 0xFFFFFF, nil]
+  end
+
+  defp encode_action_update(_world, {px, py}, reveals) do
     data =
       for {{x, y}, tile} <- reveals do
         char = TileSerializer.encode_tile(tile)
@@ -190,15 +185,6 @@ defmodule MinaWeb.GameLive do
       end
 
     ["u", to_string(px), to_string(py), reveals_color(reveals), data]
-  end
-
-  defp encode_action_add({px, py}, world) do
-    {:ok, data} = Mina.encode_partition_at(world, {px, py}, TileSerializer)
-    ["a", to_string(px), to_string(py), 0xFFFFFF, data]
-  end
-
-  defp encode_action_remove({px, py}) do
-    ["r", to_string(px), to_string(py), 0xFFFFFF, nil]
   end
 
   defp reveals_color(reveals), do: tile_color(hd(Map.values(reveals)))
