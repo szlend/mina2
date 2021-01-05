@@ -37,11 +37,11 @@ defmodule Mina.MixProject do
       {:phoenix_ecto, "~> 4.1"},
       {:ecto_sql, "~> 3.4"},
       {:postgrex, ">= 0.0.0"},
-      {:phoenix_live_view, "~> 0.13"},
+      {:phoenix_live_view, "~> 0.15"},
       {:floki, ">= 0.0.0", only: :test},
       {:phoenix_html, "~> 2.11"},
       {:phoenix_live_reload, "~> 1.2", only: :dev},
-      {:phoenix_live_dashboard, "~> 0.3.3"},
+      {:phoenix_live_dashboard, "~> 0.4.0"},
       {:telemetry_metrics, "~> 0.5"},
       {:telemetry_poller, "~> 0.5", override: true},
       {:gettext, "~> 0.11"},
@@ -64,7 +64,7 @@ defmodule Mina.MixProject do
       setup: ["deps.get", "ecto.setup", "cmd npm install --prefix assets"],
       "ecto.setup": ["ecto.create", "ecto.migrate", "run priv/repo/seeds.exs"],
       "ecto.reset": ["ecto.drop", "ecto.setup"],
-      test: ["ecto.create --quiet", "ecto.migrate", "cmd epmd -daemon", "test --no-start"]
+      test: ["ecto.create --quiet", "ecto.migrate", "cmd epmd -daemon", "test"]
     ]
   end
 end
