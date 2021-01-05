@@ -94,13 +94,15 @@ defmodule Mina.Partition.Server do
 
   @impl true
   def handle_continue(:load_state, %{persistent: true} = state) do
+    partition_id = Partition.id(state.partition)
+
     case Partition.load(state.partition) do
       {:ok, partition} ->
-        partition_id = Partition.id(state.partition)
         Partition.broadcast!(partition_id, "actions", {:up, partition_id, partition})
         {:noreply, %{state | partition: partition, orig_partition: partition}}
 
       {:error, :not_found} ->
+        Partition.broadcast!(partition_id, "actions", {:up, partition_id, state.partition})
         {:noreply, state}
     end
   end
@@ -115,7 +117,10 @@ defmodule Mina.Partition.Server do
     partition_id = Partition.id(partition)
     {partition, reveals, border_positions} = reveal_positions(positions, partition, %{}, %{})
 
-    Partition.broadcast!(partition_id, "actions", {:reveal, partition_id, reveals})
+    if reveals != %{} do
+      Partition.broadcast!(partition_id, "actions", {:reveal, partition_id, reveals})
+    end
+
     {:reply, {reveals, border_positions}, %{state | partition: partition, timer: timer}}
   end
 
