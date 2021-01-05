@@ -1,5 +1,5 @@
 # Development environment
-FROM hexpm/elixir:1.11.0-erlang-23.1-ubuntu-focal-20200703 AS development
+FROM hexpm/elixir:1.11.3-erlang-23.2.1-ubuntu-focal-20201008 AS development
 
 RUN apt-get update \
   && apt-get install -y curl ca-certificates inotify-tools wait-for-it \
