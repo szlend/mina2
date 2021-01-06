@@ -11,6 +11,8 @@
     flake-utils.lib.eachDefaultSystem (system:
       with nixpkgs.legacyPackages.${system}.pkgs; rec {
         devShell = pkgs.mkShell {
+          COMPOSE_FILE = "docker-compose.base.yml:docker-compose.dev.yml";
+
           buildInputs = with pkgs; [
             (beam.packagesWith erlangR23).elixir_1_11
             nodejs-12_x

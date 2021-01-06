@@ -1,0 +1,19 @@
+#!/bin/sh -e
+
+COMPOSE_FILE=docker-compose.base.yml:docker-compose.dev.yml
+
+if [ "$1" = "up" ]; then
+  exec docker-compose up mina
+elif [ "$1" = "shell" ]; then
+  exec docker-compose exec mina iex --sname console --cookie dev --remsh mina
+elif [ "$1" = "mix" ]; then
+  exec docker-compose run --rm mina "$@"
+elif [ "$1" = "npm" ]; then
+  exec docker-compose run --rm mina "$@" --prefix assets
+elif [ "$1 $2" = "run as" ]; then
+  shift 2 && exec docker-compose run --rm "$@"
+elif [ "$1" = "run" ]; then
+  shift && exec docker-compose run --rm mina "$@"
+else
+  exec docker-compose "$@"
+fi

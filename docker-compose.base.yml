@@ -12,7 +12,7 @@ services:
       - postgres_data:/var/lib/postgresql/data
 
   mina:
-    command: mix phx.server
+    command: elixir --sname mina --cookie dev -S mix phx.server
     depends_on:
       - postgres
     ports:
