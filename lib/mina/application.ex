@@ -10,7 +10,7 @@ defmodule Mina.Application do
 
     children = [
       # Start cluster supervisor
-      {Cluster.Supervisor, [topologies, [name: Mina.ClusterSupervisor]]},
+      {Mina.ClusterSupervisor, [topologies]},
       # Start the Ecto repository
       MinaStorage.Repo,
       # Start the PubSub system
