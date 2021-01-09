@@ -3,7 +3,7 @@
 COMPOSE_FILE=docker-compose.base.yml:docker-compose.dev.yml:docker-compose.dist.yml
 
 if [ "$1" = "up" ]; then
-  exec docker-compose up mina mina2 mina3
+  exec docker-compose up mina mina2
 elif [ "$1" = "shell" ]; then
   exec docker-compose exec ${2:-mina} iex --sname console --cookie dev --remsh mina
 elif [ "$1" = "mix" ]; then
@@ -14,6 +14,9 @@ elif [ "$1 $2" = "run as" ]; then
   shift 2 && exec docker-compose run --rm "$@"
 elif [ "$1" = "run" ]; then
   shift && exec docker-compose run --rm mina "$@"
+elif [ "$1" = "shutdown" ]; then
+  docker-compose exec -T mina elixir --cookie dev --sname shutdown --rpc-eval mina ":init.stop()"
+  docker-compose exec -T mina2 elixir --cookie dev --sname shutdown --rpc-eval mina ":init.stop()"
 else
   exec docker-compose "$@"
 fi
