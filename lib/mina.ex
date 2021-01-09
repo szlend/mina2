@@ -80,6 +80,14 @@ defmodule Mina do
     |> Partition.unsubscribe(topic)
   end
 
+  @doc """
+  Ping the partition on `world` at `position`. This prevents it from going to sleep.
+  """
+  def ping_at(world, position) do
+    {:ok, server} = ensure_partition_at(world, position)
+    Partition.Server.ping(server)
+  end
+
   defp ensure_partition_at(world, position) do
     server_opts = partition_server_opts()
     Partition.Supervisor.ensure_partition(Partition.Supervisor, world, position, server_opts)

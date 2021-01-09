@@ -4,6 +4,7 @@ defmodule Mina.Partition.Server do
   """
 
   use GenServer
+  require Logger
   alias Mina.{Partition, World}
 
   @type start_opt ::
@@ -67,9 +68,20 @@ defmodule Mina.Partition.Server do
     GenServer.call(server, {:flag, position})
   end
 
+  @doc """
+  Load the  `server` partition state.
+  """
   @spec load(GenServer.server()) :: Partition.t()
   def load(server) do
     GenServer.call(server, :load)
+  end
+
+  @doc """
+  Ping the `server` partition. This prevents it from going to sleep.
+  """
+  @spec ping(GenServer.server()) :: :ok
+  def ping(server) do
+    GenServer.cast(server, :ping)
   end
 
   @impl true
@@ -88,6 +100,8 @@ defmodule Mina.Partition.Server do
       timeout: timeout,
       timer: reset_timer(timeout)
     }
+
+    Logger.info("Starting partition #{inspect(position)}")
 
     {:ok, state, {:continue, :load_state}}
   end
@@ -144,12 +158,19 @@ defmodule Mina.Partition.Server do
   end
 
   @impl true
+  def handle_cast(:ping, state) do
+    timer = reset_timer(state.timer, state.timeout)
+    {:noreply, %{state | timer: timer}}
+  end
+
+  @impl true
   def handle_info(:shutdown, state) do
     {:stop, :normal, state}
   end
 
   @impl true
-  def terminate(:normal, %{partition: partition} = state) do
+  def terminate(reason, %{partition: partition} = state) when reason in [:normal, :shutdown] do
+    Logger.info("Shutting down partition #{inspect(partition.position)}, reason: #{reason}")
     partition_id = Partition.id(partition)
     Partition.broadcast!(partition_id, "actions", {:down, partition_id})
 
@@ -158,7 +179,8 @@ defmodule Mina.Partition.Server do
     end
   end
 
-  def terminate(_reason, %{partition: partition}) do
+  def terminate(reason, %{partition: partition}) do
+    Logger.info("Shutting down partition #{inspect(partition.position)}, reason: #{reason}")
     partition_id = Partition.id(partition)
     Partition.broadcast!(partition_id, "actions", {:down, partition_id})
   end

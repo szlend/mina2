@@ -24,6 +24,8 @@ defmodule MinaWeb.GameLive do
 
   @impl true
   def mount(_params, _session, socket) do
+    :timer.send_interval(5_000, :ping)
+
     socket =
       assign(socket,
         world: Mina.World.build("test", 15, partition_size: 50),
@@ -108,6 +110,14 @@ defmodule MinaWeb.GameLive do
   def handle_info({:flag, {_world_id, position}, reveals}, socket) do
     action = encode_action_update(socket.assigns.world, position, reveals)
     {:noreply, push_event(socket, "actions", %{actions: [action]})}
+  end
+
+  def handle_info(:ping, socket) do
+    for position <- socket.assigns.partitions do
+      Mina.ping_at(socket.assigns.world, position)
+    end
+
+    {:noreply, socket}
   end
 
   @impl true
