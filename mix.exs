@@ -48,6 +48,7 @@ defmodule Mina.MixProject do
       {:jason, "~> 1.0"},
       {:plug_cowboy, "~> 2.0"},
       {:horde, "~> 0.8.0"},
+      {:libcluster, "~> 3.2"},
       {:mix_test_watch, "~> 1.0", only: [:dev], runtime: false},
       {:credo, "~> 1.4", only: [:dev, :test], runtime: false}
     ]

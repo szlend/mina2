@@ -74,3 +74,16 @@ config :phoenix, :stacktrace_depth, 20
 
 # Initialize plugs at runtime for faster development compilation
 config :phoenix, :plug_init_mode, :runtime
+
+config :libcluster,
+  topologies: [
+    mina: [
+      strategy: Cluster.Strategy.Gossip,
+      config: [
+        port: 45892,
+        if_addr: "0.0.0.0",
+        multicast_addr: "255.255.255.255",
+        broadcast_only: true
+      ]
+    ]
+  ]

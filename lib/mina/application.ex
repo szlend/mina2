@@ -6,7 +6,11 @@ defmodule Mina.Application do
   use Application
 
   def start(_type, _args) do
+    topologies = Application.get_env(:libcluster, :topologies, [])
+
     children = [
+      # Start cluster supervisor
+      {Cluster.Supervisor, [topologies, [name: Mina.ClusterSupervisor]]},
       # Start the Ecto repository
       MinaStorage.Repo,
       # Start the PubSub system

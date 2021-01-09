@@ -1,0 +1,40 @@
+version: "3.7"
+
+volumes:
+  mina2_build:
+  mina3_build:
+
+services:
+  mina2:
+    build:
+      context: .
+      target: development
+    command: elixir --sname mina --cookie dev -S mix phx.server
+    hostname: mina2
+    depends_on:
+      - mina
+      - postgres
+    ports:
+      - 4001:4000
+    volumes:
+      - mina_deps:/app/deps
+      - mina2_build:/app/_build
+      - mina_node_modules:/app/assets/node_modules
+      - .:/app
+
+  mina3:
+    build:
+      context: .
+      target: development
+    command: elixir --sname mina --cookie dev -S mix phx.server
+    hostname: mina3
+    depends_on:
+      - mina
+      - postgres
+    ports:
+      - 4002:4000
+    volumes:
+      - mina_deps:/app/deps
+      - mina3_build:/app/_build
+      - mina_node_modules:/app/assets/node_modules
+      - .:/app
