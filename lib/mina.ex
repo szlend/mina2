@@ -88,7 +88,8 @@ defmodule Mina do
     Partition.Server.ping(server)
   end
 
-  defp ensure_partition_at(world, position) do
+  @spec ensure_partition_at(World.t(), World.position()) :: {:ok, pid} | {:error, any}
+  def ensure_partition_at(world, position) do
     server_opts = partition_server_opts()
     Partition.Supervisor.ensure_partition(Partition.Supervisor, world, position, server_opts)
   end

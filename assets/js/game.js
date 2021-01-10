@@ -22,6 +22,7 @@ export default {
       this.y = bigInt(0)
       this.width = 0
       this.height = 0
+      this.debug = false
       this.containerPool = []
 
       this.input = {
@@ -50,6 +51,21 @@ export default {
         this.pointerUp()
         e.preventDefault()
       }, { passive: false })
+
+      window.addEventListener("keyup", (e) => {
+        if (e.key === "h") {
+          this.debug = !this.debug
+          for (let container of this.app.stage.children) {
+            if (container.partition) {
+              container.cacheAsBitmap = false
+              container.partitionText.visible = this.debug
+              container.outline.visible = this.debug
+              container.cacheAsBitmap = true
+            }
+          }
+        }
+        e.preventDefault()
+      })
 
       this.pushEvent("camera", { x: this.x.toString(), y: this.y.toString() })
       this.handleEvent("actions", ({ actions }) => this.handleActions(actions))
@@ -99,10 +115,10 @@ export default {
   },
 
   handleActions(actions) {
-    for (let [type, x, y, color, items] of actions) {
+    for (let [type, x, y, node, color, items] of actions) {
       switch (type) {
         case "a":
-          this.setupContainer(bigInt(x), bigInt(y), items)
+          this.setupContainer(bigInt(x), bigInt(y), node, items)
           break
         case "u":
           this.updateContainer(bigInt(x), bigInt(y), color, items)
@@ -114,11 +130,13 @@ export default {
     }
   },
 
-  setupContainer(partitionX, partitionY, items) {
+  setupContainer(partitionX, partitionY, node, items) {
     const container =
       this.findContainer(partitionX, partitionY) ||
       this.containerPool.pop() ||
       this.newContainer()
+
+    container.cacheAsBitmap = false
 
     for (let y = 0; y < this.partitionSize; y++) {
       for (let x = 0; x < this.partitionSize; x++) {
@@ -130,6 +148,7 @@ export default {
     }
 
     container.partition = { x: partitionX, y: partitionY }
+    container.partitionText.text = `(${partitionX}, ${partitionY}) - ${node}`
     container.visible = true
     container.cacheAsBitmap = true
   },
@@ -172,7 +191,6 @@ export default {
   releaseContainer(partitionX, partitionY) {
     const container = this.findContainer(partitionX, partitionY)
     container.visible = false
-    container.cacheAsBitmap = false
     container.partition = null
     this.containerPool.push(container)
   },
@@ -191,6 +209,7 @@ export default {
 
     container.buttonMode = true
     container.interactive = true
+    container.sortChildren = true
     container.on("pointerdown", this.containerPointerDown.bind(this))
     container.on("mouseup", this.containerLeftClick.bind(this))
     container.on("rightclick", this.containerRightClick.bind(this))
@@ -206,6 +225,24 @@ export default {
         container.addChild(tile)
       }
     }
+
+    container.outline = new PIXI.Graphics()
+    container.outline.lineStyle(4, 0x000000)
+    container.outline.moveTo(0, 0)
+    container.outline.lineTo(this.tileSize * this.partitionSize, 0)
+    container.outline.lineTo(this.tileSize * this.partitionSize, this.tileSize * this.partitionSize)
+    container.outline.lineTo(0, this.tileSize * this.partitionSize)
+    container.outline.lineTo(0, 0)
+    container.outline.zIndex = 10000000
+    container.outline.visible = this.debug
+    container.addChild(container.outline)
+
+    container.partitionText = new PIXI.Text("", { fontSize: 16, fill: "white", lineJoin: "round", strokeThickness: 4 })
+    container.partitionText.x = 4
+    container.partitionText.y = 4
+    container.partitionText.zIndex = 10000000
+    container.partitionText.visible = this.debug
+    container.addChild(container.partitionText)
 
     this.app.stage.addChild(container)
     return container

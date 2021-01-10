@@ -109,19 +109,23 @@ defmodule Mina.Partition.Server do
   @impl true
   def handle_continue(:load_state, %{persistent: true} = state) do
     partition_id = Partition.id(state.partition)
+    partition = state.partition
 
-    case Partition.load(state.partition) do
+    case Partition.load(partition) do
       {:ok, partition} ->
-        Partition.broadcast!(partition_id, "actions", {:up, partition_id, partition})
+        Partition.broadcast!(partition_id, "actions", {:up, self(), partition_id, partition})
         {:noreply, %{state | partition: partition, orig_partition: partition}}
 
       {:error, :not_found} ->
-        Partition.broadcast!(partition_id, "actions", {:up, partition_id, state.partition})
+        Partition.broadcast!(partition_id, "actions", {:up, self(), partition_id, partition})
         {:noreply, state}
     end
   end
 
   def handle_continue(:load_state, state) do
+    partition_id = Partition.id(state.partition)
+    partition = state.partition
+    Partition.broadcast!(partition_id, "actions", {:up, self(), partition_id, partition})
     {:noreply, state}
   end
 

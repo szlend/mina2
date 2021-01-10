@@ -28,7 +28,7 @@ defmodule MinaWeb.GameLive do
 
     socket =
       assign(socket,
-        world: Mina.World.build("test", 15, partition_size: 50),
+        world: Mina.World.build("test", 15, partition_size: 10),
         tileset: @tileset_json,
         tileset_url: Routes.static_path(socket, "/images/tiles.png"),
         tile_size: 128,
@@ -79,12 +79,12 @@ defmodule MinaWeb.GameLive do
   end
 
   @impl true
-  def handle_info({:add, :skip}, socket) do
+  def handle_info({:add, _pid, :skip}, socket) do
     {:noreply, socket}
   end
 
-  def handle_info({:add, partition}, socket) do
-    action = encode_action_add(partition)
+  def handle_info({:add, pid, partition}, socket) do
+    action = encode_action_add(partition, pid)
     {:noreply, push_event(socket, "actions", %{actions: [action]})}
   end
 
@@ -93,8 +93,8 @@ defmodule MinaWeb.GameLive do
     {:noreply, push_event(socket, "actions", %{actions: [action]})}
   end
 
-  def handle_info({:up, _partition_id, partition}, socket) do
-    action = encode_action_add(partition)
+  def handle_info({:up, pid, _partition_id, partition}, socket) do
+    action = encode_action_add(partition, pid)
     {:noreply, push_event(socket, "actions", %{actions: [action]})}
   end
 
@@ -152,7 +152,8 @@ defmodule MinaWeb.GameLive do
     for position <- added do
       Mina.subscribe_partition_at(world, position, "actions")
       {:ok, partition} = Mina.load_partition_at(world, position)
-      send(self(), {:add, partition})
+      {:ok, pid} = Mina.ensure_partition_at(world, position)
+      send(self(), {:add, pid, partition})
     end
 
     assign(socket, x: x, y: y, width: width, height: height, partitions: partitions)
@@ -178,13 +179,13 @@ defmodule MinaWeb.GameLive do
     MapSet.new(for y <- ys, x <- xs, do: {x, y})
   end
 
-  defp encode_action_add(%{position: {px, py}} = partition) do
+  defp encode_action_add(%{position: {px, py}} = partition, pid) do
     {:ok, data} = TileSerializer.encode(partition)
-    ["a", to_string(px), to_string(py), 0xFFFFFF, data]
+    ["a", to_string(px), to_string(py), node_name(pid), 0xFFFFFF, data]
   end
 
   defp encode_action_remove(_world, {px, py}) do
-    ["r", to_string(px), to_string(py), 0xFFFFFF, nil]
+    ["r", to_string(px), to_string(py), nil, 0xFFFFFF, nil]
   end
 
   defp encode_action_update(_world, {px, py}, reveals) do
@@ -194,7 +195,7 @@ defmodule MinaWeb.GameLive do
         [x - px, y - py, to_string([char])]
       end
 
-    ["u", to_string(px), to_string(py), reveals_color(reveals), data]
+    ["u", to_string(px), to_string(py), nil, reveals_color(reveals), data]
   end
 
   defp reveals_color(reveals), do: tile_color(hd(Map.values(reveals)))
@@ -203,4 +204,12 @@ defmodule MinaWeb.GameLive do
   defp tile_color(:mine), do: 0xFF0000
   defp tile_color(:flag), do: 0x00FF00
   defp tile_color(_tile), do: 0x00FF00
+
+  defp node_name(pid) do
+    pid
+    |> node()
+    |> to_string()
+    |> String.split("@")
+    |> Enum.at(1)
+  end
 end
